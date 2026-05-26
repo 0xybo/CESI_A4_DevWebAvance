@@ -7,8 +7,8 @@ metadata:
 namespace: production
 
 resources:
-    - app-deployment.yaml
-    - app-ingress.yaml
+    - frontend/
+    - backend/
     - traefik-dashboard-ingress.yaml
     - k8s-dashboard-ingress.yaml
     - ghcr-secret.yaml
