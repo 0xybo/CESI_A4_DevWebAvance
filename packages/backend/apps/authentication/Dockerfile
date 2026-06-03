@@ -4,9 +4,9 @@
 FROM ghcr.io/pnpm/pnpm:11 AS build
 RUN pnpm runtime set node 26 -g
 WORKDIR /app
-# Copy package files and install dependencies
+# Copy package files and install dependencies (hoisted = flat node_modules, no symlinks)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile --node-linker=hoisted
 # Copy source code and build the application
 COPY . .
 RUN pnpm build authentication
@@ -16,6 +16,8 @@ RUN pnpm build authentication
 # +--------------------------------------------------------+
 FROM node:26-alpine AS runtime
 WORKDIR /app
+# Copy node_modules from build stage (flat structure thanks to --node-linker=hoisted)
+COPY --from=build /app/node_modules ./node_modules
 # Copy built application from the build stage
 COPY --from=build /app/dist/apps/authentication/ ./dist/apps/authentication
 CMD ["node", "dist/apps/authentication/main.js"]
