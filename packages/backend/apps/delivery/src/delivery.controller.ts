@@ -8,6 +8,6 @@ export class DeliveryController {
 
     @MessagePattern('health')
     getHealth() {
-        return { status: 'ok', service: 'delivery' }
+        return { status: 'ok', service: 'delivery' };
     }
 }

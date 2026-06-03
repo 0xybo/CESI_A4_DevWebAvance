@@ -11,13 +11,13 @@ resources:
     # Deployments & Services
     # - services/postgres.yaml
     # - services/redis.yaml
-    # - services/rabbitmq.yaml
     # - services/mongo.yaml
-    # - services/backend/authentication-service.yaml
-    # - services/backend/billing-service.yaml
-    # - services/backend/stock-service.yaml
-    # - services/backend/delivery-service.yaml
-    # - services/backend/users-service.yaml
+    - services/rabbitmq.yaml
+    - services/backend/authentication-service.yaml
+    - services/backend/billing-service.yaml
+    - services/backend/stock-service.yaml
+    - services/backend/delivery-service.yaml
+    - services/backend/users-service.yaml
     - services/backend/gateway-service.yaml
     - services/frontend.yaml
 

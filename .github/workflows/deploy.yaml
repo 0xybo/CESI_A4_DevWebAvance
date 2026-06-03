@@ -20,38 +20,24 @@ jobs:
         permissions:
             contents: read
             packages: write
-
         steps:
-            - name: 📥 Checkout code
-              uses: actions/checkout@v4
-
-            - name: 🐳 Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
-
-            - name: 🔐 Log in to Container Registry
+            - uses: actions/checkout@v4
+            - uses: docker/setup-buildx-action@v3
+            - uses: docker/login-action@v3
               if: github.event_name != 'pull_request'
-              uses: docker/login-action@v3
               with:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: 📝 Extract metadata
-              id: meta
+            - id: meta
               uses: docker/metadata-action@v5
               with:
                   images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/transvirex-frontend
                   tags: |
                       type=ref,event=branch
-                      type=semver,pattern={{version}}
-                      type=semver,pattern={{major}}.{{minor}}
                       type=sha,prefix={{branch}}-
                       type=raw,value=latest,enable={{is_default_branch}}
-                  labels: |
-                      org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-
-            - name: 🏗️ Build and push image
-              uses: docker/build-push-action@v5
+            - uses: docker/build-push-action@v5
               with:
                   context: ./packages/frontend
                   file: ./packages/frontend/Dockerfile
@@ -59,8 +45,8 @@ jobs:
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
                   target: production
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
+                  cache-from: type=gha,scope=frontend
+                  cache-to: type=gha,scope=frontend,mode=max
 
     build-gateway:
         name: 🏗️ Build Gateway Image
@@ -68,38 +54,24 @@ jobs:
         permissions:
             contents: read
             packages: write
-
         steps:
-            - name: 📥 Checkout code
-              uses: actions/checkout@v4
-
-            - name: 🐳 Set up Docker Buildx
-              uses: docker/setup-buildx-action@v3
-
-            - name: 🔐 Log in to Container Registry
+            - uses: actions/checkout@v4
+            - uses: docker/setup-buildx-action@v3
+            - uses: docker/login-action@v3
               if: github.event_name != 'pull_request'
-              uses: docker/login-action@v3
               with:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
                   password: ${{ secrets.GITHUB_TOKEN }}
-
-            - name: 📝 Extract metadata
-              id: meta
+            - id: meta
               uses: docker/metadata-action@v5
               with:
                   images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/transvirex-gateway-service
                   tags: |
                       type=ref,event=branch
-                      type=semver,pattern={{version}}
-                      type=semver,pattern={{major}}.{{minor}}
                       type=sha,prefix={{branch}}-
                       type=raw,value=latest,enable={{is_default_branch}}
-                  labels: |
-                      org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-
-            - name: 🏗️ Build and push image
-              uses: docker/build-push-action@v5
+            - uses: docker/build-push-action@v5
               with:
                   context: ./packages/backend
                   file: ./packages/backend/apps/gateway/Dockerfile
@@ -107,21 +79,189 @@ jobs:
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
                   target: runtime
-                  cache-from: type=gha
-                  cache-to: type=gha,mode=max
+                  cache-from: type=gha,scope=gateway
+                  cache-to: type=gha,scope=gateway,mode=max
+
+    build-authentication:
+        name: 🏗️ Build Authentication Image
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: docker/setup-buildx-action@v3
+            - uses: docker/login-action@v3
+              if: github.event_name != 'pull_request'
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+            - id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/transvirex-authentication-service
+                  tags: |
+                      type=ref,event=branch
+                      type=sha,prefix={{branch}}-
+                      type=raw,value=latest,enable={{is_default_branch}}
+            - uses: docker/build-push-action@v5
+              with:
+                  context: ./packages/backend
+                  file: ./packages/backend/apps/authentication/Dockerfile
+                  push: ${{ github.event_name != 'pull_request' }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  target: runtime
+                  cache-from: type=gha,scope=authentication
+                  cache-to: type=gha,scope=authentication,mode=max
+
+    build-billing:
+        name: 🏗️ Build Billing Image
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: docker/setup-buildx-action@v3
+            - uses: docker/login-action@v3
+              if: github.event_name != 'pull_request'
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+            - id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/transvirex-billing-service
+                  tags: |
+                      type=ref,event=branch
+                      type=sha,prefix={{branch}}-
+                      type=raw,value=latest,enable={{is_default_branch}}
+            - uses: docker/build-push-action@v5
+              with:
+                  context: ./packages/backend
+                  file: ./packages/backend/apps/billing/Dockerfile
+                  push: ${{ github.event_name != 'pull_request' }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  target: runtime
+                  cache-from: type=gha,scope=billing
+                  cache-to: type=gha,scope=billing,mode=max
+
+    build-stock:
+        name: 🏗️ Build Stock Image
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: docker/setup-buildx-action@v3
+            - uses: docker/login-action@v3
+              if: github.event_name != 'pull_request'
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+            - id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/transvirex-stock-service
+                  tags: |
+                      type=ref,event=branch
+                      type=sha,prefix={{branch}}-
+                      type=raw,value=latest,enable={{is_default_branch}}
+            - uses: docker/build-push-action@v5
+              with:
+                  context: ./packages/backend
+                  file: ./packages/backend/apps/stock/Dockerfile
+                  push: ${{ github.event_name != 'pull_request' }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  target: runtime
+                  cache-from: type=gha,scope=stock
+                  cache-to: type=gha,scope=stock,mode=max
+
+    build-delivery:
+        name: 🏗️ Build Delivery Image
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: docker/setup-buildx-action@v3
+            - uses: docker/login-action@v3
+              if: github.event_name != 'pull_request'
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+            - id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/transvirex-delivery-service
+                  tags: |
+                      type=ref,event=branch
+                      type=sha,prefix={{branch}}-
+                      type=raw,value=latest,enable={{is_default_branch}}
+            - uses: docker/build-push-action@v5
+              with:
+                  context: ./packages/backend
+                  file: ./packages/backend/apps/delivery/Dockerfile
+                  push: ${{ github.event_name != 'pull_request' }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  target: runtime
+                  cache-from: type=gha,scope=delivery
+                  cache-to: type=gha,scope=delivery,mode=max
+
+    build-users:
+        name: 🏗️ Build Users Image
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write
+        steps:
+            - uses: actions/checkout@v4
+            - uses: docker/setup-buildx-action@v3
+            - uses: docker/login-action@v3
+              if: github.event_name != 'pull_request'
+              with:
+                  registry: ${{ env.REGISTRY }}
+                  username: ${{ github.actor }}
+                  password: ${{ secrets.GITHUB_TOKEN }}
+            - id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/transvirex-users-service
+                  tags: |
+                      type=ref,event=branch
+                      type=sha,prefix={{branch}}-
+                      type=raw,value=latest,enable={{is_default_branch}}
+            - uses: docker/build-push-action@v5
+              with:
+                  context: ./packages/backend
+                  file: ./packages/backend/apps/users/Dockerfile
+                  push: ${{ github.event_name != 'pull_request' }}
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  target: runtime
+                  cache-from: type=gha,scope=users
+                  cache-to: type=gha,scope=users,mode=max
 
     deploy:
         name: 🚀 Deploy to Production
         runs-on: ubuntu-latest
-        needs: [build-frontend, build-gateway]
+        needs: [build-frontend, build-gateway, build-authentication, build-billing, build-stock, build-delivery, build-users]
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
         steps:
-            - name: 📥 Checkout code
-              uses: actions/checkout@v4
+            - uses: actions/checkout@v4
 
-            - name: 🔑 Login to GHCR
-              uses: docker/login-action@v3
+            - uses: docker/login-action@v3
               with:
                   registry: ${{ env.REGISTRY }}
                   username: ${{ github.actor }}
@@ -160,16 +300,26 @@ jobs:
 
                       kubectl rollout restart deployment/transvirex-frontend -n production --kubeconfig ~/.kube/config
                       kubectl rollout restart deployment/transvirex-gateway -n production --kubeconfig ~/.kube/config
+                      kubectl rollout restart deployment/transvirex-authentication -n production --kubeconfig ~/.kube/config
+                      kubectl rollout restart deployment/transvirex-billing -n production --kubeconfig ~/.kube/config
+                      kubectl rollout restart deployment/transvirex-stock -n production --kubeconfig ~/.kube/config
+                      kubectl rollout restart deployment/transvirex-delivery -n production --kubeconfig ~/.kube/config
+                      kubectl rollout restart deployment/transvirex-users -n production --kubeconfig ~/.kube/config
 
                       kubectl rollout status deployment/transvirex-frontend -n production --timeout=5m --kubeconfig ~/.kube/config
                       kubectl rollout status deployment/transvirex-gateway -n production --timeout=5m --kubeconfig ~/.kube/config
+                      kubectl rollout status deployment/transvirex-authentication -n production --timeout=5m --kubeconfig ~/.kube/config
+                      kubectl rollout status deployment/transvirex-billing -n production --timeout=5m --kubeconfig ~/.kube/config
+                      kubectl rollout status deployment/transvirex-stock -n production --timeout=5m --kubeconfig ~/.kube/config
+                      kubectl rollout status deployment/transvirex-delivery -n production --timeout=5m --kubeconfig ~/.kube/config
+                      kubectl rollout status deployment/transvirex-users -n production --timeout=5m --kubeconfig ~/.kube/config
 
                       rm -rf /tmp/k8s-manifests
 
     notify:
         name: 📢 Notify
         runs-on: ubuntu-latest
-        needs: [build-frontend, build-gateway, deploy]
+        needs: [build-frontend, build-gateway, build-authentication, build-billing, build-stock, build-delivery, build-users, deploy]
         if: always()
 
         steps:
