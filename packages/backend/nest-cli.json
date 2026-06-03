@@ -3,8 +3,7 @@
     "collection": "@nestjs/schematics",
     "compilerOptions": {
         "deleteOutDir": true,
-        "webpack": true,
-        "bundleNodeModules": true
+        "webpack": true
     },
     "monorepo": true,
     "root": "apps/backend",
