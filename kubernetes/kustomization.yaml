@@ -18,7 +18,7 @@ resources:
     # - services/backend/stock-service.yaml
     # - services/backend/tours-service.yaml
     # - services/backend/users-service.yaml
-    # - services/backend/gateway-service.yaml
+    - services/backend/gateway-service.yaml
     - services/frontend.yaml
 
     # Traefik
@@ -27,6 +27,7 @@ resources:
     - services/traefik.yaml
 
     # Ingresses
+    - ingresses/api-ingress.yaml
     - ingresses/frontend-ingress.yaml
     - ingresses/kubernetes-ingress.yaml
     - ingresses/traefik-ingress.yaml
