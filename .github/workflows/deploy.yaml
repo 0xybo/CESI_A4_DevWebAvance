@@ -271,7 +271,7 @@ jobs:
               uses: appleboy/ssh-action@v0.1.7
               env:
                   GHCR_USERNAME: ${{ github.actor }}
-                  GHCR_TOKEN: ${{ github.token }}
+                  GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
               with:
                   host: ${{ secrets.VPS_HOST }}
                   username: github-actions
