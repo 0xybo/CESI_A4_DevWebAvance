@@ -1,7 +1,6 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
 import { AuthenticationService } from './authentication.service';
 import { MessagePattern } from '@nestjs/microservices';
-
 
 @Controller()
 export class AuthenticationController {
@@ -9,9 +8,13 @@ export class AuthenticationController {
         private readonly authenticationService: AuthenticationService,
     ) {}
 
-    @MessagePattern('health')
-    getHealth() {
-        return { status: 'ok', service: 'authentication' }
+    @Get('health')
+    getHealthHttp() {
+        return { status: 'ok', service: 'authentication' };
     }
 
+    @MessagePattern('health')
+    getHealth() {
+        return { status: 'ok', service: 'authentication' };
+    }
 }

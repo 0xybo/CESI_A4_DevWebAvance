@@ -3,7 +3,9 @@ import { Transport } from '@nestjs/microservices';
 import { UsersModule } from './users.module';
 
 async function bootstrap() {
-    const app = await NestFactory.createMicroservice(UsersModule, {
+    const app = await NestFactory.create(UsersModule);
+
+    app.connectMicroservice({
         transport: Transport.RMQ,
         options: {
             urls: [
@@ -16,10 +18,11 @@ async function bootstrap() {
         },
     });
 
-    await app.listen();
-    console.log('Users microservice is listening for messages...');
+    await app.startAllMicroservices();
+    await app.listen(process.env.PORT || 3005);
+    console.log('Users service listening on port 3005 (HTTP + RabbitMQ)');
 }
 bootstrap().catch((error) => {
-    console.error('Error starting users microservice:', error);
+    console.error('Error starting users service:', error);
     process.exit(1);
 });

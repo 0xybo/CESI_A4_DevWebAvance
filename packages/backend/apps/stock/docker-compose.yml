@@ -29,3 +29,11 @@ services:
         restart: unless-stopped
         networks:
             - transvirex-network
+        develop:
+            watch:
+                - path: ./
+                  ignore:
+                      - node_modules
+                      - dist
+                  action: sync
+                  target: /app/apps/stock

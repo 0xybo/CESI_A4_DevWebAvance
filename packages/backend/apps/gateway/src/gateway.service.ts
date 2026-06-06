@@ -1,16 +1,28 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { firstValueFrom, timeout } from 'rxjs';
+import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 
 @Injectable()
 export class GatewayService {
-    constructor(
-        @Inject('AUTH_SERVICE') private authClient: ClientProxy,
-        @Inject('BILLING_SERVICE') private billingClient: ClientProxy,
-        @Inject('STOCK_SERVICE') private stockClient: ClientProxy,
-        @Inject('DELIVERY_SERVICE') private deliveryClient: ClientProxy,
-        @Inject('USERS_SERVICE') private usersClient: ClientProxy,
-    ) {}
+    private readonly serviceUrls = {
+        auth: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
+        billing: process.env.BILLING_SERVICE_URL || 'http://localhost:3002',
+        delivery: process.env.DELIVERY_SERVICE_URL || 'http://localhost:3003',
+        stock: process.env.STOCK_SERVICE_URL || 'http://localhost:3004',
+        users: process.env.USERS_SERVICE_URL || 'http://localhost:3005',
+    };
+
+    private async fetchHealth(service: string, baseUrl: string) {
+        try {
+            const response = await fetch(`${baseUrl}/health`, {
+                signal: AbortSignal.timeout(5000),
+            });
+            return await response.json();
+        } catch {
+            throw new HttpException(
+                { status: 'error', service, message: 'Service unreachable' },
+                HttpStatus.SERVICE_UNAVAILABLE,
+            );
+        }
+    }
 
     getHello(): string {
         return 'Hello World!';
@@ -21,72 +33,22 @@ export class GatewayService {
     }
 
     async getAuthHealth() {
-        try {
-            return await firstValueFrom(
-                this.authClient.send('health', {}).pipe(timeout(5000)),
-            );
-        } catch {
-            return {
-                status: 'error',
-                service: 'auth',
-                message: 'Service unreachable',
-            };
-        }
+        return this.fetchHealth('auth', this.serviceUrls.auth);
     }
 
     async getBillingHealth() {
-        try {
-            return await firstValueFrom(
-                this.billingClient.send('health', {}).pipe(timeout(5000)),
-            );
-        } catch {
-            return {
-                status: 'error',
-                service: 'billing',
-                message: 'Service unreachable',
-            };
-        }
+        return this.fetchHealth('billing', this.serviceUrls.billing);
     }
 
     async getStockHealth() {
-        try {
-            return await firstValueFrom(
-                this.stockClient.send('health', {}).pipe(timeout(5000)),
-            );
-        } catch {
-            return {
-                status: 'error',
-                service: 'stock',
-                message: 'Service unreachable',
-            };
-        }
+        return this.fetchHealth('stock', this.serviceUrls.stock);
     }
 
     async getDeliveryHealth() {
-        try {
-            return await firstValueFrom(
-                this.deliveryClient.send('health', {}).pipe(timeout(5000)),
-            );
-        } catch {
-            return {
-                status: 'error',
-                service: 'delivery',
-                message: 'Service unreachable',
-            };
-        }
+        return this.fetchHealth('delivery', this.serviceUrls.delivery);
     }
 
     async getUsersHealth() {
-        try {
-            return await firstValueFrom(
-                this.usersClient.send('health', {}).pipe(timeout(5000)),
-            );
-        } catch {
-            return {
-                status: 'error',
-                service: 'users',
-                message: 'Service unreachable',
-            };
-        }
+        return this.fetchHealth('users', this.serviceUrls.users);
     }
 }

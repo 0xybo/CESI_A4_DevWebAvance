@@ -87,6 +87,31 @@ spec:
                             configMapKeyRef:
                                 name: transvirex-config
                                 key: LOG_LEVEL
+                      - name: AUTH_SERVICE_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: transvirex-config
+                                key: AUTH_SERVICE_URL
+                      - name: BILLING_SERVICE_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: transvirex-config
+                                key: BILLING_SERVICE_URL
+                      - name: DELIVERY_SERVICE_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: transvirex-config
+                                key: DELIVERY_SERVICE_URL
+                      - name: STOCK_SERVICE_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: transvirex-config
+                                key: STOCK_SERVICE_URL
+                      - name: USERS_SERVICE_URL
+                        valueFrom:
+                            configMapKeyRef:
+                                name: transvirex-config
+                                key: USERS_SERVICE_URL
                   ports:
                       - containerPort: 3000
                         name: http

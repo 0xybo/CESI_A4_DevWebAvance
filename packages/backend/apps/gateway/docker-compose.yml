@@ -21,6 +21,11 @@ services:
             - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
             - RABBITMQ_USER=${RABBITMQ_USER:-rabbitmq_user}
             - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-rabbitmq_password}
+            - AUTH_SERVICE_URL=http://authentication-service:3001
+            - BILLING_SERVICE_URL=http://billing-service:3002
+            - DELIVERY_SERVICE_URL=http://delivery-service:3003
+            - STOCK_SERVICE_URL=http://stock-service:3004
+            - USERS_SERVICE_URL=http://users-service:3005
         volumes:
             - ./:/app/apps/gateway
             - /app/node_modules
@@ -31,3 +36,11 @@ services:
         restart: unless-stopped
         networks:
             - transvirex-network
+        develop:
+            watch:
+                - path: ./
+                  ignore:
+                      - node_modules
+                      - dist
+                  action: sync
+                  target: /app/apps/gateway

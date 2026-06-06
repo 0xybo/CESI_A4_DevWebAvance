@@ -3,7 +3,9 @@ import { Transport } from '@nestjs/microservices';
 import { BillingModule } from './billing.module';
 
 async function bootstrap() {
-    const app = await NestFactory.createMicroservice(BillingModule, {
+    const app = await NestFactory.create(BillingModule);
+
+    app.connectMicroservice({
         transport: Transport.RMQ,
         options: {
             urls: [
@@ -16,10 +18,11 @@ async function bootstrap() {
         },
     });
 
-    await app.listen();
-    console.log('Billing microservice is listening for messages...');
+    await app.startAllMicroservices();
+    await app.listen(process.env.PORT || 3002);
+    console.log('Billing service listening on port 3002 (HTTP + RabbitMQ)');
 }
 bootstrap().catch((error) => {
-    console.error('Error starting billing microservice:', error);
+    console.error('Error starting billing service:', error);
     process.exit(1);
 });

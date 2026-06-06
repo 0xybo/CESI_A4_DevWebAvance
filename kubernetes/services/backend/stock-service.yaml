@@ -77,6 +77,9 @@ spec:
                             configMapKeyRef:
                                 name: transvirex-config
                                 key: LOG_LEVEL
+                  ports:
+                      - containerPort: 3004
+                        name: http
                   resources:
                       requests:
                           cpu: 100m
@@ -84,3 +87,20 @@ spec:
                       limits:
                           cpu: 500m
                           memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+    name: transvirex-stock
+    namespace: production
+    labels:
+        app: transvirex-stock
+spec:
+    type: ClusterIP
+    selector:
+        app: transvirex-stock
+    ports:
+        - port: 3004
+          targetPort: 3004
+          name: http
+          protocol: TCP
