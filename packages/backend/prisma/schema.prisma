@@ -1,0 +1,226 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+enum HubStatus {
+    active
+    inactive
+    unavailable
+}
+
+enum UserStatus {
+    active
+    inactive
+    unavailable
+}
+
+enum UserRole {
+    admin
+    dispatcher
+    driver
+    business_manager
+}
+
+enum DeliveryStatus {
+    delivered
+    planned
+    delivering
+    cancelled
+    blocked
+    delayed
+}
+
+enum InvoiceServiceType {
+    express
+    standard
+    freight
+}
+
+enum InvoicePriority {
+    urgent
+    high
+    standard
+    low
+}
+
+enum InvoiceStatus {
+    quotation
+    purchase_order
+    invoice
+}
+
+enum EventType {
+    note
+    info
+    warning
+    critical
+    fatal
+}
+
+enum EventStatus {
+    waiting
+    resolved
+    information
+}
+
+enum CustomerStatus {
+    active
+    inactive
+}
+
+model Address {
+    id          String  @id @default(uuid()) @db.Uuid
+    address     String?
+    street      String?
+    city        String?
+    postal_code String?
+
+    hubs              Hub[]
+    customers         Customer[]
+    pickup_invoices   Invoice[]  @relation("PickupAddress")
+    delivery_invoices Invoice[]  @relation("DeliveryAddress")
+}
+
+model Hub {
+    id                   String     @id @default(uuid()) @db.Uuid
+    reference            String
+    manager_id           String?    @db.Uuid
+    address_id           String?    @db.Uuid
+    name                 String?
+    phone_number         String?
+    capacity_parcels_day Int?
+    status               HubStatus?
+
+    address   Address?   @relation(fields: [address_id], references: [id])
+    users     User[]
+    vehicles  Vehicle[]
+    customers Customer[]
+    invoices  Invoice[]
+}
+
+model User {
+    id                String?     @id @default(uuid()) @db.Uuid
+    reference         String
+    hub_id            String?     @db.Uuid
+    firstname         String?
+    lastname          String?
+    phone_number      String?
+    work_phone_number String?
+    email             String?
+    work_email        String?
+    hash_password     String?
+    status            UserStatus?
+    role              UserRole?
+
+    hub              Hub?      @relation(fields: [hub_id], references: [id])
+    driver           Driver?
+    managed_invoices Invoice[]
+}
+
+model Vehicle {
+    id            String  @id @default(uuid()) @db.Uuid
+    hub_id        String? @db.Uuid
+    reference     String
+    type          String?
+    license_plate String?
+
+    hub     Hub?     @relation(fields: [hub_id], references: [id])
+    drivers Driver[]
+}
+
+model Driver {
+    id         String  @id @default(uuid()) @db.Uuid
+    user_id    String  @db.Uuid
+    reference  String
+    vehicle_id String? @db.Uuid
+    rating     Float?
+
+    user       User       @relation(fields: [user_id], references: [id])
+    vehicle    Vehicle?   @relation(fields: [vehicle_id], references: [id])
+    deliveries Delivery[]
+}
+
+model Customer {
+    id                String?         @id @default(uuid()) @db.Uuid
+    reference         String
+    hub_id            String?         @db.Uuid
+    address_id        String?         @db.Uuid
+    customer_name     String?
+    customer_type     String?
+    contact_firstname String?
+    contact_lastname  String?
+    phone_number      String?
+    email             String?
+    status            CustomerStatus?
+
+    hub      Hub?      @relation(fields: [hub_id], references: [id])
+    address  Address?  @relation(fields: [address_id], references: [id])
+    invoices Invoice[]
+}
+
+model Invoice {
+    id                  String              @id @default(uuid()) @db.Uuid
+    customer_id         String              @db.Uuid
+    hub_id              String              @db.Uuid
+    pickup_address_id   String              @db.Uuid
+    delivery_address_id String              @db.Uuid
+    business_manager_id String              @db.Uuid
+    reference           String
+    service_type        InvoiceServiceType?
+    priority            InvoicePriority
+    due_date            DateTime
+    payment_date        DateTime?
+    amount              Float               @default(0)
+    status              InvoiceStatus?
+
+    customer         Customer @relation(fields: [customer_id], references: [id])
+    hub              Hub      @relation(fields: [hub_id], references: [id])
+    pickup_address   Address  @relation("PickupAddress", fields: [pickup_address_id], references: [id])
+    delivery_address Address  @relation("DeliveryAddress", fields: [delivery_address_id], references: [id])
+    business_manager User     @relation(fields: [business_manager_id], references: [id])
+    deliveries       Delivery[]
+    parcels          Parcel[]
+}
+
+model Delivery {
+    id               String          @id @default(uuid()) @db.Uuid
+    invoices_id      String          @db.Uuid
+    driver_id        String?         @db.Uuid
+    reference        String
+    status           DeliveryStatus?
+    notes            String?
+    position_history Json?
+
+    invoice         Invoice         @relation(fields: [invoices_id], references: [id])
+    driver          Driver?         @relation(fields: [driver_id], references: [id])
+    delivery_events DeliveryEvent[]
+}
+
+model Parcel {
+    id         String @id @default(uuid()) @db.Uuid
+    invoice_id String @db.Uuid
+    reference  String
+    weight     Float
+
+    invoice Invoice @relation(fields: [invoice_id], references: [id])
+}
+
+model DeliveryEvent {
+    id                     String      @id @default(uuid()) @db.Uuid
+    delivery_id            String      @db.Uuid
+    description            String?
+    latitude               Float?
+    longitude              Float?
+    type                   EventType   @default(note)
+    status                 EventStatus
+    resolution_description String?
+    created_at             DateTime?
+    resolution_date        DateTime?
+
+    delivery Delivery @relation(fields: [delivery_id], references: [id])
+}

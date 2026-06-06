@@ -7,8 +7,10 @@ WORKDIR /app
 # Copy package files and install dependencies (hoisted = flat node_modules, no symlinks)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile --node-linker=hoisted
-# Copy source code and build the application
+# Copy source code and generate Prisma client
 COPY . .
+RUN pnpm exec prisma generate
+# Build the application
 RUN pnpm build authentication
 
 # +--------------------------------------------------------+
@@ -20,7 +22,9 @@ WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 # Copy built application from the build stage
 COPY --from=build /app/dist/apps/authentication/ ./dist/apps/authentication
-CMD ["node", "dist/apps/authentication/main.js"]
+# Copy Prisma schema and migrations for migrate deploy
+COPY --from=build /app/prisma ./prisma
+CMD ["sh", "-c", "node node_modules/.bin/prisma migrate deploy && node dist/apps/authentication/main.js"]
 
 # +--------------------------------------------------------+
 # |                      DEVELOPMENT                       |
@@ -33,5 +37,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 # Copy source code for development
 COPY . .
-# Start the development server
-CMD ["pnpm", "run", "dev:authentication"]
+RUN pnpm exec prisma generate
+# Run migrations then start the development server
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && pnpm run dev:authentication"]

@@ -7,8 +7,9 @@ WORKDIR /app
 # Copy package files and install dependencies (hoisted = flat node_modules, no symlinks)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile --node-linker=hoisted
-# Copy source code and build the application
+# Copy source code, generate Prisma client and build
 COPY . .
+RUN pnpm exec prisma generate
 RUN pnpm build stock
 
 # +--------------------------------------------------------+
@@ -16,11 +17,10 @@ RUN pnpm build stock
 # +--------------------------------------------------------+
 FROM node:26-alpine AS runtime
 WORKDIR /app
-# Copy node_modules from build stage (flat structure thanks to --node-linker=hoisted)
 COPY --from=build /app/node_modules ./node_modules
-# Copy built application from the build stage
 COPY --from=build /app/dist/apps/stock/ ./dist/apps/stock
-CMD ["node", "dist/apps/stock/main.js"]
+COPY --from=build /app/prisma ./prisma
+CMD ["sh", "-c", "node node_modules/.bin/prisma migrate deploy && node dist/apps/stock/main.js"]
 
 # +--------------------------------------------------------+
 # |                      DEVELOPMENT                       |
@@ -28,10 +28,8 @@ CMD ["node", "dist/apps/stock/main.js"]
 FROM ghcr.io/pnpm/pnpm:11 AS development
 RUN pnpm runtime set node 26 -g
 WORKDIR /app
-# Copy package files and install all dependencies
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
-# Copy source code for development
 COPY . .
-# Start the development server
-CMD ["pnpm", "run", "dev:stock"]
+RUN pnpm exec prisma generate
+CMD ["sh", "-c", "pnpm exec prisma migrate deploy && pnpm run dev:stock"]
