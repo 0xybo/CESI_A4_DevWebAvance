@@ -1,11 +1,7 @@
 <script setup lang="ts">
-// If production, redirect to home
-if (process.env.NODE_ENV === 'production') {
-    navigateTo('/');
-}
-
 const health = useHealthStore();
 const route = useRoute();
+const isProduction = process.env.NODE_ENV === 'production';
 
 onMounted(() => health.checkAll());
 </script>
@@ -72,6 +68,7 @@ onMounted(() => health.checkAll());
 
                 <NuxtLink
                     to="/debug/postgresql"
+                    v-if="!isProduction"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-slate-800 hover:text-white transition"
                 >
                     <svg

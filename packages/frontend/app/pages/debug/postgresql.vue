@@ -29,7 +29,12 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { useSqlStore } from '@/stores/sql';
 
-useHead({ title: 'Console SQL — Transvirex' });
+// If production, redirect to home
+if (process.env.NODE_ENV === 'production') {
+    navigateTo('/debug');
+}
+
+useHead({ title: 'Console PostgreSQL — Transvirex' });
 
 const sql = useSqlStore();
 const showSaveDialog = ref(false);
