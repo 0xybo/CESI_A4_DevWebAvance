@@ -169,8 +169,8 @@ const password = ref('');
 const error = ref('');
 const loading = ref(false);
 
-const accessToken = useCookie('access_token', { maxAge: 60 * 15 });
-const refreshToken = useCookie('refresh_token', { maxAge: 60 * 60 * 24 * 7 });
+const accessToken = useCookie('access_token', { maxAge: 60 * 15, sameSite: 'strict' });
+const refreshToken = useCookie('refresh_token', { maxAge: 60 * 60 * 24 * 7, sameSite: 'strict' });
 
 async function handleSubmit() {
     loading.value = true;
