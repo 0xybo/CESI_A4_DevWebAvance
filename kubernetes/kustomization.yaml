@@ -10,7 +10,7 @@ resources:
 
     # Deployments & Services
     - services/postgres.yaml
-    # - services/redis.yaml
+    - services/redis.yaml
     # - services/mongo.yaml
     - services/rabbitmq.yaml
     - services/pgadmin.yaml
