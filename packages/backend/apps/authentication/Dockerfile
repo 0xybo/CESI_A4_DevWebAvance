@@ -11,7 +11,7 @@ RUN pnpm install --frozen-lockfile --node-linker=hoisted
 COPY . .
 RUN pnpm exec prisma generate
 # Build the application
-RUN node_modules/.bin/tsc -p tsconfig.json 2>&1
+RUN node_modules/.bin/tsc -p tsconfig.build.json 2>&1
 
 # +--------------------------------------------------------+
 # |                         RUNTIME                        |
