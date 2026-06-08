@@ -29,6 +29,7 @@ resources:
     - services/traefik.yaml
 
     # Middlewares
+    - middlewares/https-redirect.yaml
     - middlewares/basic-auth.yaml
 
     # Ingresses
