@@ -15,7 +15,7 @@ RUN node_modules/.bin/tsc -p tsconfig.build.json 2>&1
 # +--------------------------------------------------------+
 # |                         RUNTIME                        |
 # +--------------------------------------------------------+
-FROM node:26-alpine AS runtime
+FROM node:26-slim AS runtime
 WORKDIR /app
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist/apps/users/ ./dist/apps/users/
