@@ -129,11 +129,11 @@
 </template>
 
 <script setup lang="ts">
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { Truck, Clock, CheckCircle, AlertTriangle, XCircle, Package } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { AlertTriangle, Package, XCircle } from '@lucide/vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Dashboard Dispatcher — Transvirex' });

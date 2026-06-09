@@ -84,13 +84,13 @@
     </AppLayout>
 </template>
 <script setup lang="ts">
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { useCookie } from '#app';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Truck } from 'lucide-vue-next';
-import { useCookie } from '#app';
+import { Truck } from '@lucide/vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Mon profil — Livreur' });

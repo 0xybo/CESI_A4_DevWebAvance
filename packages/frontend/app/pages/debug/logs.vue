@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useErrorLogger } from '@/composables/useErrorLogger';
 import type { LogEntry } from '@/stores/logs';
 import { useLogsStore } from '@/stores/logs';
-import { TestTube2Icon } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight, FileText, RefreshCw, TestTube2Icon, Trash2 } from '@lucide/vue';
 
 useHead({ title: 'Logs — Transvirex' });
 
@@ -171,22 +171,7 @@ function testError() {
                                         @click="logs.fetchBackendLogs()"
                                         :disabled="logs.loading"
                                     >
-                                        <svg
-                                            class="w-4 h-4"
-                                            :class="{
-                                                'animate-spin': logs.loading,
-                                            }"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                            />
-                                        </svg>
+                                        <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': logs.loading }" />
                                         Actualiser
                                     </Button>
                                     <Button
@@ -195,14 +180,7 @@ function testError() {
                                         class="text-red-600 border-red-200 hover:bg-red-50"
                                         @click="confirmClear('backend')"
                                     >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                        </svg>
+                                        <Trash2 class="w-4 h-4" />
                                         Vider
                                     </Button>
                                 </div>
@@ -231,19 +209,7 @@ function testError() {
                                 {{ logs.error }}
                             </div>
                             <div v-else-if="logs.backendLogs.length === 0" class="text-center py-12 text-gray-400">
-                                <svg
-                                    class="w-16 h-16 mx-auto text-gray-300 mb-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="1.5"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                </svg>
+                                <FileText class="w-16 h-16 mx-auto text-gray-300 mb-4" />
                                 <p>Aucun log disponible</p>
                             </div>
                             <div v-else>
@@ -269,22 +235,12 @@ function testError() {
                                                     @click="toggleRow(log._id)"
                                                 >
                                                     <TableCell class="text-gray-400">
-                                                        <svg
+                                                        <ChevronRight
                                                             class="w-4 h-4 transition-transform"
                                                             :class="{
                                                                 'rotate-90': expandedRows.has(log._id),
                                                             }"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path
-                                                                stroke-linecap="round"
-                                                                stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M9 5l7 7-7 7"
-                                                            />
-                                                        </svg>
+                                                        />
                                                     </TableCell>
                                                     <TableCell class="text-xs text-gray-500 whitespace-nowrap">
                                                         {{ formatTimestamp(log.timestamp) }}
@@ -361,14 +317,7 @@ function testError() {
                                                 logs.fetchBackendLogs();
                                             "
                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M15 19l-7-7 7-7"
-                                                />
-                                            </svg>
+                                            <ChevronLeft class="w-4 h-4" />
                                         </Button>
                                         <span class="text-sm text-gray-600 min-w-16 text-center">
                                             Page
@@ -384,14 +333,7 @@ function testError() {
                                                 logs.fetchBackendLogs();
                                             "
                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M9 5l7 7-7 7"
-                                                />
-                                            </svg>
+                                            <ChevronRight class="w-4 h-4" />
                                         </Button>
                                     </div>
                                     <div class="flex items-center gap-2">
@@ -441,25 +383,9 @@ function testError() {
                                         @click="logs.fetchFrontendLogs()"
                                         :disabled="logs.loading"
                                     >
-                                        <svg
-                                            class="w-4 h-4"
-                                            :class="{
-                                                'animate-spin': logs.loading,
-                                            }"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                            />
-                                        </svg>
+                                        <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': logs.loading }" />
                                         Actualiser
                                     </Button>
-
                                     <Button variant="outline" size="sm" @click="testError()">
                                         <TestTube2Icon class="w-4 h-4" />
                                         Tester
@@ -470,14 +396,7 @@ function testError() {
                                         class="text-red-600 border-red-200 hover:bg-red-50"
                                         @click="confirmClear('frontend')"
                                     >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                        </svg>
+                                        <Trash2 class="w-4 h-4" />
                                         Vider
                                     </Button>
                                 </div>
@@ -506,19 +425,7 @@ function testError() {
                                 {{ logs.error }}
                             </div>
                             <div v-else-if="logs.frontendLogs.length === 0" class="text-center py-12 text-gray-400">
-                                <svg
-                                    class="w-16 h-16 mx-auto text-gray-300 mb-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="1.5"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                </svg>
+                                <FileText class="w-16 h-16 mx-auto text-gray-300 mb-4" />
                                 <p>Aucun log disponible</p>
                             </div>
                             <div v-else>
@@ -542,22 +449,12 @@ function testError() {
                                                     @click="toggleRow(log._id)"
                                                 >
                                                     <TableCell class="text-gray-400">
-                                                        <svg
+                                                        <ChevronRight
                                                             class="w-4 h-4 transition-transform"
                                                             :class="{
                                                                 'rotate-90': expandedRows.has(log._id),
                                                             }"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path
-                                                                stroke-linecap="round"
-                                                                stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M9 5l7 7-7 7"
-                                                            />
-                                                        </svg>
+                                                        />
                                                     </TableCell>
                                                     <TableCell class="text-xs text-gray-500 whitespace-nowrap">
                                                         {{ formatTimestamp(log.timestamp) }}
@@ -615,14 +512,7 @@ function testError() {
                                                 logs.fetchFrontendLogs();
                                             "
                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M15 19l-7-7 7-7"
-                                                />
-                                            </svg>
+                                            <ChevronLeft class="w-4 h-4" />
                                         </Button>
                                         <span class="text-sm text-gray-600 min-w-16 text-center">
                                             Page
@@ -638,14 +528,7 @@ function testError() {
                                                 logs.fetchFrontendLogs();
                                             "
                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M9 5l7 7-7 7"
-                                                />
-                                            </svg>
+                                            <ChevronRight class="w-4 h-4" />
                                         </Button>
                                     </div>
                                     <div class="flex items-center gap-2">

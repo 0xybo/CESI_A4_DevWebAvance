@@ -151,11 +151,11 @@
 </template>
 
 <script setup lang="ts">
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { useCookie } from '#app';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MapPin } from 'lucide-vue-next';
-import { useCookie } from '#app';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { MapPin } from '@lucide/vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Dashboard Livreur — Transvirex' });

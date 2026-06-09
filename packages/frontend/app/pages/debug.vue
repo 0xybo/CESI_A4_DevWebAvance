@@ -10,7 +10,7 @@ import {
     MessageSquareMoreIcon,
     PackageIcon,
     RefreshCwIcon,
-} from 'lucide-vue-next';
+} from '@lucide/vue';
 import SidebarLink from '~/components/debug/SidebarLink.vue';
 
 const health = useHealthStore();

@@ -121,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { Truck, Package, CreditCard, Users, TrendingUp, TrendingDown } from 'lucide-vue-next';
+import { CreditCard, Package, TrendingDown, TrendingUp, Truck, Users } from '@lucide/vue';
 
 definePageMeta({ layout: 'dashboard' });
 useHead({ title: 'Dashboard — Transvirex' });

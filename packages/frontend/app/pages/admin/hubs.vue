@@ -55,10 +55,10 @@
 </template>
 
 <script setup lang="ts">
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Building2 } from 'lucide-vue-next';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Building2, Plus } from '@lucide/vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Hubs — Transvirex' });

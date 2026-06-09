@@ -51,8 +51,8 @@
 <script setup lang="ts">
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { Search } from 'lucide-vue-next';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Search } from '@lucide/vue';
 definePageMeta({ layout: false });
 useHead({ title: 'Clients — Dispatcher' });
 /** Search/filter input value. */

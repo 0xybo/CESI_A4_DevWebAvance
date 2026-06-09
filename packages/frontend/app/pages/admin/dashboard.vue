@@ -152,24 +152,24 @@
 </template>
 
 <script setup lang="ts">
-import { Bar, Line, Doughnut } from 'vue-chartjs';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TrendingDown, TrendingUp } from '@lucide/vue';
 import {
-    Chart as ChartJS,
-    Title,
-    Tooltip,
-    Legend,
+    ArcElement,
     BarElement,
     CategoryScale,
+    Chart as ChartJS,
+    Filler,
+    Legend,
     LinearScale,
     LineElement,
     PointElement,
-    ArcElement,
-    Filler,
+    Title,
+    Tooltip,
 } from 'chart.js';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { TrendingUp, TrendingDown } from 'lucide-vue-next';
+import { Bar, Doughnut, Line } from 'vue-chartjs';
 
 /** Register Chart.js components used across dashboard charts. */
 ChartJS.register(

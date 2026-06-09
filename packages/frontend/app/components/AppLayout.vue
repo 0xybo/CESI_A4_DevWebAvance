@@ -132,28 +132,28 @@
 </template>
 
 <script setup lang="ts">
+import { navigateTo, useCookie, useRoute } from '#app';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import {
-    LayoutDashboard,
-    Truck,
-    Package,
-    Users,
-    Settings,
-    LogOut,
+    BarChart3,
     Bell,
     Building2,
     Car,
-    UserCog,
-    FileText,
-    BarChart3,
-    ChevronRight,
     ChevronLeft,
+    ChevronRight,
+    FileText,
+    LayoutDashboard,
+    LogOut,
     Menu,
+    Package,
+    Settings,
     ShoppingBag,
-} from 'lucide-vue-next';
-import { useCookie, navigateTo, useRoute } from '#app';
+    Truck,
+    UserCog,
+    Users,
+} from '@lucide/vue';
 import { $fetch } from 'ofetch';
 
 /** Possible user roles for navigation and display. */

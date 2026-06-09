@@ -73,11 +73,11 @@
     </AppLayout>
 </template>
 <script setup lang="ts">
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { Search, Truck, UserCheck, UserX } from 'lucide-vue-next';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Search, Truck, UserCheck, UserX } from '@lucide/vue';
 definePageMeta({ layout: false });
 useHead({ title: 'Chauffeurs — Dispatcher' });
 /** Search/filter input value. */

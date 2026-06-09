@@ -74,13 +74,13 @@
 </template>
 
 <script setup lang="ts">
+import { useCookie } from '#app';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { FileDown, Loader2 } from 'lucide-vue-next';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { exportOrdreMissionPdf, type MissionData } from '@/composables/usePdfExport';
-import { useCookie } from '#app';
+import { FileDown, Loader2 } from '@lucide/vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Mes livraisons — Livreur' });

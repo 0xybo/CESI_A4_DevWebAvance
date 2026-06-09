@@ -16,6 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useSqlStore } from '@/stores/sql';
+import { ChevronLeft, ChevronRight, Database, Pencil, PlayCircle, RefreshCw, Save, Trash2 } from '@lucide/vue';
 
 useHead({ title: 'Console PostgreSQL — Transvirex' });
 
@@ -89,51 +90,12 @@ function selectTable(name: string) {
                                 <Textarea v-model="sql.query" placeholder='SELECT * FROM "User" LIMIT 10' :rows="6" />
                                 <div class="flex flex-wrap gap-2 mt-4">
                                     <Button @click="sql.execute()" :disabled="sql.loading">
-                                        <svg
-                                            class="w-4 h-4"
-                                            v-if="!sql.loading"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                                            />
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                            />
-                                        </svg>
-                                        <svg
-                                            class="w-4 h-4"
-                                            v-else
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                            />
-                                        </svg>
+                                        <PlayCircle v-if="!sql.loading" class="w-4 h-4" />
+                                        <RefreshCw v-else class="w-4 h-4 animate-spin" />
                                         {{ sql.loading ? 'Exécution...' : 'Exécuter' }}
                                     </Button>
                                     <Button variant="outline" @click="showSaveDialog = true">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"
-                                            />
-                                        </svg>
+                                        <Save class="w-4 h-4" />
                                         Sauvegarder
                                     </Button>
                                 </div>
@@ -181,19 +143,7 @@ function selectTable(name: string) {
                         <Card v-if="!sql.results && !sql.error && !sql.loading">
                             <CardContent>
                                 <div class="py-12 text-center">
-                                    <svg
-                                        class="w-16 h-16 mx-auto text-gray-300 mb-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="1.5"
-                                            d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-                                        />
-                                    </svg>
+                                    <Database class="w-16 h-16 mx-auto text-gray-300 mb-4" />
                                     <p class="text-gray-500">Exécutez une requête pour voir les résultats</p>
                                 </div>
                             </CardContent>
@@ -238,19 +188,7 @@ function selectTable(name: string) {
                                                     @click="sql.loadQuery(saved.id)"
                                                     title="Charger"
                                                 >
-                                                    <svg
-                                                        class="w-4 h-4"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                                        />
-                                                    </svg>
+                                                    <RefreshCw class="w-4 h-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -258,19 +196,7 @@ function selectTable(name: string) {
                                                     @click="rename(saved)"
                                                     title="Renommer"
                                                 >
-                                                    <svg
-                                                        class="w-4 h-4"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                                        />
-                                                    </svg>
+                                                    <Pencil class="w-4 h-4" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
@@ -278,19 +204,7 @@ function selectTable(name: string) {
                                                     @click="sql.deleteQuery(saved.id)"
                                                     title="Supprimer"
                                                 >
-                                                    <svg
-                                                        class="w-4 h-4"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                                        />
-                                                    </svg>
+                                                    <Trash2 class="w-4 h-4" />
                                                 </Button>
                                             </div>
                                         </div>
@@ -316,22 +230,12 @@ function selectTable(name: string) {
                                             @click="sql.fetchTables()"
                                             :disabled="sql.tablesLoading"
                                         >
-                                            <svg
+                                            <RefreshCw
                                                 class="w-4 h-4"
                                                 :class="{
                                                     'animate-spin': sql.tablesLoading,
                                                 }"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                                                />
-                                            </svg>
+                                            />
                                         </Button>
                                     </div>
                                     <ScrollArea class="h-125">
@@ -368,19 +272,7 @@ function selectTable(name: string) {
                             <div class="lg:col-span-3">
                                 <div class="p-4">
                                     <div v-if="!sql.selectedTable" class="text-center py-16 text-gray-400">
-                                        <svg
-                                            class="w-16 h-16 mx-auto text-gray-300 mb-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="1.5"
-                                                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"
-                                            />
-                                        </svg>
+                                        <Database class="w-16 h-16 mx-auto text-gray-300 mb-4" />
                                         <p>Sélectionnez une table dans la liste</p>
                                     </div>
 
@@ -461,19 +353,7 @@ function selectTable(name: string) {
                                                     :disabled="sql.tablePage <= 1"
                                                     @click="sql.goToTablePage(sql.tablePage - 1)"
                                                 >
-                                                    <svg
-                                                        class="w-4 h-4"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M15 19l-7-7 7-7"
-                                                        />
-                                                    </svg>
+                                                    <ChevronLeft class="w-4 h-4" />
                                                 </Button>
                                                 <span class="text-sm text-gray-600 min-w-16 text-center">
                                                     Page {{ sql.tablePage }} /
@@ -485,19 +365,7 @@ function selectTable(name: string) {
                                                     :disabled="sql.tablePage >= sql.tableData.totalPages"
                                                     @click="sql.goToTablePage(sql.tablePage + 1)"
                                                 >
-                                                    <svg
-                                                        class="w-4 h-4"
-                                                        fill="none"
-                                                        stroke="currentColor"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <path
-                                                            stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            stroke-width="2"
-                                                            d="M9 5l7 7-7 7"
-                                                        />
-                                                    </svg>
+                                                    <ChevronRight class="w-4 h-4" />
                                                 </Button>
                                             </div>
                                             <div class="flex items-center gap-2">
