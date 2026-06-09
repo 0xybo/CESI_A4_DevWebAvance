@@ -37,7 +37,11 @@
                                 <TableCell class="font-mono text-xs text-muted-foreground">{{ d.ref }}</TableCell>
                                 <TableCell>
                                     <div class="flex items-center gap-2.5">
-                                        <div class="w-7 h-7 rounded-full bg-green-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">{{ d.name.charAt(0) }}</div>
+                                        <div
+                                            class="w-7 h-7 rounded-full bg-green-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                                        >
+                                            {{ d.name.charAt(0) }}
+                                        </div>
                                         <span class="font-medium">{{ d.name }}</span>
                                     </div>
                                 </TableCell>
@@ -46,12 +50,23 @@
                                 <TableCell>{{ d.hub }}</TableCell>
                                 <TableCell class="text-yellow-500 font-semibold text-xs">★ {{ d.rating }}</TableCell>
                                 <TableCell>
-                                    <Badge :class="d.status === 'Disponible' ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100' : d.status === 'En livraison' ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100' : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100'">{{ d.status }}</Badge>
+                                    <Badge
+                                        :class="
+                                            d.status === 'Disponible'
+                                                ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100'
+                                                : d.status === 'En livraison'
+                                                  ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100'
+                                                  : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100'
+                                        "
+                                        >{{ d.status }}</Badge
+                                    >
                                 </TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
-                    <div class="px-4 py-3 border-t text-xs text-muted-foreground">{{ filtered.length }} chauffeur(s)</div>
+                    <div class="px-4 py-3 border-t text-xs text-muted-foreground">
+                        {{ filtered.length }} chauffeur(s)
+                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -59,25 +74,89 @@
 </template>
 
 <script setup lang="ts">
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { Plus, Search } from 'lucide-vue-next';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Search } from '@lucide/vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Chauffeurs — Transvirex' });
 
+/** Search/filter input value. */
 const search = ref('');
+/** Static list of chauffeurs for the demo table. */
 const drivers = [
-    { ref: 'DRV-001', name: 'Pierre Martin', email: 'driver@transvirex.fr', vehicle: 'Fourgon FO-001', hub: 'Hub Paris Centre', rating: 4.8, status: 'En livraison' },
-    { ref: 'DRV-002', name: 'Marc Dupont', email: 'm.dupont@transvirex.fr', vehicle: 'Fourgon FO-002', hub: 'Hub Paris Centre', rating: 4.9, status: 'Disponible' },
-    { ref: 'DRV-003', name: 'Sophie Martin', email: 's.martin@transvirex.fr', vehicle: 'Camionnette CM-001', hub: 'Hub Lyon', rating: 4.7, status: 'En livraison' },
-    { ref: 'DRV-004', name: 'Alain Bernard', email: 'a.bernard@transvirex.fr', vehicle: 'Fourgon FO-003', hub: 'Hub Bordeaux', rating: 4.6, status: 'Disponible' },
-    { ref: 'DRV-005', name: 'Julie Thomas', email: 'j.thomas@transvirex.fr', vehicle: 'Vélo cargo VC-001', hub: 'Hub Paris Centre', rating: 4.5, status: 'Repos' },
-    { ref: 'DRV-006', name: 'Robert Petit', email: 'r.petit@transvirex.fr', vehicle: 'Camionnette CM-002', hub: 'Hub Lille', rating: 4.7, status: 'En livraison' },
-    { ref: 'DRV-007', name: 'Claire Leroy', email: 'c.leroy@transvirex.fr', vehicle: 'Fourgon FO-004', hub: 'Hub Nantes', rating: 4.8, status: 'Disponible' },
+    {
+        ref: 'DRV-001',
+        name: 'Pierre Martin',
+        email: 'driver@transvirex.fr',
+        vehicle: 'Fourgon FO-001',
+        hub: 'Hub Paris Centre',
+        rating: 4.8,
+        status: 'En livraison',
+    },
+    {
+        ref: 'DRV-002',
+        name: 'Marc Dupont',
+        email: 'm.dupont@transvirex.fr',
+        vehicle: 'Fourgon FO-002',
+        hub: 'Hub Paris Centre',
+        rating: 4.9,
+        status: 'Disponible',
+    },
+    {
+        ref: 'DRV-003',
+        name: 'Sophie Martin',
+        email: 's.martin@transvirex.fr',
+        vehicle: 'Camionnette CM-001',
+        hub: 'Hub Lyon',
+        rating: 4.7,
+        status: 'En livraison',
+    },
+    {
+        ref: 'DRV-004',
+        name: 'Alain Bernard',
+        email: 'a.bernard@transvirex.fr',
+        vehicle: 'Fourgon FO-003',
+        hub: 'Hub Bordeaux',
+        rating: 4.6,
+        status: 'Disponible',
+    },
+    {
+        ref: 'DRV-005',
+        name: 'Julie Thomas',
+        email: 'j.thomas@transvirex.fr',
+        vehicle: 'Vélo cargo VC-001',
+        hub: 'Hub Paris Centre',
+        rating: 4.5,
+        status: 'Repos',
+    },
+    {
+        ref: 'DRV-006',
+        name: 'Robert Petit',
+        email: 'r.petit@transvirex.fr',
+        vehicle: 'Camionnette CM-002',
+        hub: 'Hub Lille',
+        rating: 4.7,
+        status: 'En livraison',
+    },
+    {
+        ref: 'DRV-007',
+        name: 'Claire Leroy',
+        email: 'c.leroy@transvirex.fr',
+        vehicle: 'Fourgon FO-004',
+        hub: 'Hub Nantes',
+        rating: 4.8,
+        status: 'Disponible',
+    },
 ];
-const filtered = computed(() => drivers.filter(d => !search.value || Object.values(d).some(v => String(v).toLowerCase().includes(search.value.toLowerCase()))));
+/** Drivers filtered by the search query. */
+const filtered = computed(() =>
+    drivers.filter(
+        (d) =>
+            !search.value || Object.values(d).some((v) => String(v).toLowerCase().includes(search.value.toLowerCase())),
+    ),
+);
 </script>

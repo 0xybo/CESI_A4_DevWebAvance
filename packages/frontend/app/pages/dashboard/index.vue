@@ -2,24 +2,11 @@
     <div>
         <!-- KPI Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
-            <div
-                v-for="kpi in kpis"
-                :key="kpi.label"
-                class="bg-white rounded-xl p-5 shadow-sm border border-gray-100"
-            >
+            <div v-for="kpi in kpis" :key="kpi.label" class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
                 <div class="flex items-center justify-between mb-3">
-                    <span class="text-sm font-medium text-gray-500">{{
-                        kpi.label
-                    }}</span>
-                    <div
-                        class="w-9 h-9 rounded-lg flex items-center justify-center"
-                        :class="kpi.iconBg"
-                    >
-                        <component
-                            :is="kpi.icon"
-                            class="w-5 h-5"
-                            :class="kpi.iconColor"
-                        />
+                    <span class="text-sm font-medium text-gray-500">{{ kpi.label }}</span>
+                    <div class="w-9 h-9 rounded-lg flex items-center justify-center" :class="kpi.iconBg">
+                        <component :is="kpi.icon" class="w-5 h-5" :class="kpi.iconColor" />
                     </div>
                 </div>
                 <p class="text-2xl font-bold text-gray-900">{{ kpi.value }}</p>
@@ -37,19 +24,10 @@
         <!-- Bottom grid -->
         <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
             <!-- Recent deliveries -->
-            <div
-                class="xl:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
-            >
-                <div
-                    class="px-5 py-4 border-b border-gray-100 flex items-center justify-between"
-                >
-                    <h2 class="font-semibold text-gray-800">
-                        Livraisons récentes
-                    </h2>
-                    <NuxtLink
-                        to="/dashboard/livraisons"
-                        class="text-xs text-blue-600 hover:underline"
-                    >
+            <div class="xl:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h2 class="font-semibold text-gray-800">Livraisons récentes</h2>
+                    <NuxtLink to="/dashboard/livraisons" class="text-xs text-blue-600 hover:underline">
                         Voir tout →
                     </NuxtLink>
                 </div>
@@ -57,21 +35,11 @@
                     <table class="w-full text-sm">
                         <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
                             <tr>
-                                <th class="px-5 py-3 text-left font-medium">
-                                    ID
-                                </th>
-                                <th class="px-5 py-3 text-left font-medium">
-                                    Destination
-                                </th>
-                                <th class="px-5 py-3 text-left font-medium">
-                                    Chauffeur
-                                </th>
-                                <th class="px-5 py-3 text-left font-medium">
-                                    Statut
-                                </th>
-                                <th class="px-5 py-3 text-left font-medium">
-                                    Heure
-                                </th>
+                                <th class="px-5 py-3 text-left font-medium">ID</th>
+                                <th class="px-5 py-3 text-left font-medium">Destination</th>
+                                <th class="px-5 py-3 text-left font-medium">Chauffeur</th>
+                                <th class="px-5 py-3 text-left font-medium">Statut</th>
+                                <th class="px-5 py-3 text-left font-medium">Heure</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -80,9 +48,7 @@
                                 :key="d.id"
                                 class="border-t border-gray-50 hover:bg-gray-50 transition"
                             >
-                                <td
-                                    class="px-5 py-3 font-mono text-xs text-gray-500"
-                                >
+                                <td class="px-5 py-3 font-mono text-xs text-gray-500">
                                     {{ d.id }}
                                 </td>
                                 <td class="px-5 py-3 text-gray-800">
@@ -99,9 +65,7 @@
                                         {{ d.status }}
                                     </span>
                                 </td>
-                                <td
-                                    class="px-5 py-3 text-gray-500 text-xs font-mono"
-                                >
+                                <td class="px-5 py-3 text-gray-500 text-xs font-mono">
                                     {{ d.time }}
                                 </td>
                             </tr>
@@ -111,15 +75,9 @@
             </div>
 
             <!-- Services health -->
-            <div
-                class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
-            >
-                <div
-                    class="px-5 py-4 border-b border-gray-100 flex items-center justify-between"
-                >
-                    <h2 class="font-semibold text-gray-800">
-                        Santé des services
-                    </h2>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                    <h2 class="font-semibold text-gray-800">Santé des services</h2>
                     <button
                         @click="checkHealth"
                         :disabled="healthLoading"
@@ -140,13 +98,10 @@
                                 :class="{
                                     'bg-green-500': svc.status === 'ok',
                                     'bg-red-500': svc.status === 'error',
-                                    'bg-gray-300 animate-pulse':
-                                        svc.status === 'pending',
+                                    'bg-gray-300 animate-pulse': svc.status === 'pending',
                                 }"
                             />
-                            <span class="text-sm text-gray-700">{{
-                                svc.name
-                            }}</span>
+                            <span class="text-sm text-gray-700">{{ svc.name }}</span>
                         </div>
                         <span
                             class="text-xs font-medium tabular-nums"
@@ -156,13 +111,7 @@
                                 'text-gray-400': svc.status === 'pending',
                             }"
                         >
-                            {{
-                                svc.status === 'pending'
-                                    ? '—'
-                                    : svc.status === 'ok'
-                                      ? `${svc.ms}ms`
-                                      : 'Erreur'
-                            }}
+                            {{ svc.status === 'pending' ? '—' : svc.status === 'ok' ? `${svc.ms}ms` : 'Erreur' }}
                         </span>
                     </div>
                 </div>
@@ -172,18 +121,12 @@
 </template>
 
 <script setup lang="ts">
-import {
-    Truck,
-    Package,
-    CreditCard,
-    Users,
-    TrendingUp,
-    TrendingDown,
-} from 'lucide-vue-next';
+import { CreditCard, Package, TrendingDown, TrendingUp, Truck, Users } from '@lucide/vue';
 
 definePageMeta({ layout: 'dashboard' });
 useHead({ title: 'Dashboard — Transvirex' });
 
+/** KPI metric cards displayed at the top of the dashboard. */
 const kpis = [
     {
         label: "Livraisons aujourd'hui",
@@ -219,6 +162,7 @@ const kpis = [
     },
 ];
 
+/** Recent deliveries data displayed in the activity table. */
 const recentDeliveries = [
     {
         id: '#LIV-0091',
@@ -264,6 +208,9 @@ const recentDeliveries = [
     },
 ];
 
+/**
+ * Return Tailwind CSS classes for a delivery status badge.
+ */
 function statusClass(status: string) {
     const map: Record<string, string> = {
         Livré: 'bg-green-100 text-green-700',
@@ -274,13 +221,19 @@ function statusClass(status: string) {
     return map[status] ?? 'bg-gray-100 text-gray-600';
 }
 
+/** Health status of a backend service. */
 interface ServiceHealth {
+    /** Service display name. */
     name: string;
+    /** Health check URL. */
     url: string;
+    /** Current health status. */
     status: 'pending' | 'ok' | 'error';
+    /** Response time in ms, or null. */
     ms: number | null;
 }
 
+/** List of backend services to monitor. */
 const services = ref<ServiceHealth[]>([
     {
         name: 'API Gateway',
@@ -320,8 +273,12 @@ const services = ref<ServiceHealth[]>([
     },
 ]);
 
+/** Whether the health check is currently running. */
 const healthLoading = ref(false);
 
+/**
+ * Check the health of all backend services concurrently.
+ */
 async function checkHealth() {
     healthLoading.value = true;
     await Promise.all(
