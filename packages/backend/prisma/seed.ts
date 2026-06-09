@@ -1,15 +1,11 @@
-import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
+import { PrismaClient } from '@generated/prisma';
+import { PrismaPg } from '@prisma/adapter-pg';
+import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const url = `postgresql://${process.env.POSTGRES_USER ?? 'postgres_user'}:${process.env.POSTGRES_PASSWORD ?? 'postgres_password'}@${process.env.POSTGRES_HOST ?? 'postgres'}:${process.env.POSTGRES_PORT ?? '5432'}/${process.env.POSTGRES_DB ?? 'transvirex'}`;
+const prisma = new PrismaClient({ adapter: new PrismaPg(url) });
 
 async function main() {
-    const existing = await prisma.user.findFirst();
-    if (existing) {
-        console.log('DB already seeded, skipping.');
-        return;
-    }
-
     const address = await prisma.address.create({
         data: {
             address: '1 Rue de la Logistique',
