@@ -128,7 +128,6 @@ export class GatewayController {
     }
 
     @Post('debug/seed')
-    @BlockInProduction()
     async seedDatabase() {
         return this.gatewayService.seedDatabase();
     }
