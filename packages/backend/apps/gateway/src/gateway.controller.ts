@@ -9,29 +9,8 @@ import {
     Res,
 } from '@nestjs/common';
 import { BlockInProduction } from '@app/guards';
-import { Request, Response } from 'express';
-import type { Request, Response } from 'express';
 import type { Request, Response } from 'express';
 import { GatewayService } from './gateway.service';
-import { Public } from './decorators/public.decorator';
-import { LoginDto } from './dto/login.dto';
-
-const ACCESS_TOKEN_TTL = 15 * 60 * 1000;
-const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60 * 1000;
-
-const accessTokenCookieOptions = (maxAge: number) => ({
-    httpOnly: false,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
-    maxAge,
-});
-
-const refreshTokenCookieOptions = (maxAge: number) => ({
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
-    maxAge,
-});
 import { Public } from './decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 
@@ -57,13 +36,11 @@ export class GatewayController {
     constructor(private readonly gatewayService: GatewayService) {}
 
     @Public()
-    @Public()
     @Get()
     getHello(): string {
         return this.gatewayService.getHello();
     }
 
-    @Public()
     @Public()
     @Get('gateway/health')
     getGatewayHealth() {
@@ -71,13 +48,11 @@ export class GatewayController {
     }
 
     @Public()
-    @Public()
     @Get('auth/health')
     getAuthHealth() {
         return this.gatewayService.getAuthHealth();
     }
 
-    @Public()
     @Public()
     @Get('billing/health')
     getBillingHealth() {
@@ -85,13 +60,11 @@ export class GatewayController {
     }
 
     @Public()
-    @Public()
     @Get('stock/health')
     getStockHealth() {
         return this.gatewayService.getStockHealth();
     }
 
-    @Public()
     @Public()
     @Get('delivery/health')
     getDeliveryHealth() {
@@ -99,31 +72,11 @@ export class GatewayController {
     }
 
     @Public()
-    @Public()
     @Get('users/health')
     getUsersHealth() {
         return this.gatewayService.getUsersHealth();
     }
 
-    @Public()
-    @Public()
-    @Post('debug/postgresql')
-    @BlockInProduction()
-    async executePostgreSQL(@Body('query') query: string) {
-        if (!query || typeof query !== 'string') {
-            throw new ForbiddenException(
-                'query is required and must be a string',
-            );
-        }
-        return this.gatewayService.executePostgreSQL(query);
-    }
-
-    @Get('auth/me')
-    me(@Req() req: Request) {
-        return (req as any).user;
-    }
-
-    @Public()
     @Get('auth/me')
     me(@Req() req: Request) {
         return (req as any).user;
@@ -136,26 +89,8 @@ export class GatewayController {
         @Res({ passthrough: true }) res: Response,
     ) {
         const data = await this.gatewayService.login(body);
-        res.cookie(
-            'access_token',
-            data.access_token,
-            cookieOptions(ACCESS_TOKEN_TTL),
-        );
-        res.cookie(
-            'refresh_token',
-            data.refresh_token,
-            cookieOptions(REFRESH_TOKEN_TTL),
-        );
-        res.cookie(
-            'access_token',
-            data.access_token,
-            accessTokenCookieOptions(ACCESS_TOKEN_TTL),
-        );
-        res.cookie(
-            'refresh_token',
-            data.refresh_token,
-            refreshTokenCookieOptions(REFRESH_TOKEN_TTL),
-        );
+        res.cookie('access_token', data.access_token, accessTokenCookieOptions(ACCESS_TOKEN_TTL));
+        res.cookie('refresh_token', data.refresh_token, refreshTokenCookieOptions(REFRESH_TOKEN_TTL));
         return { success: true };
     }
 
@@ -166,19 +101,9 @@ export class GatewayController {
         @Res({ passthrough: true }) res: Response,
     ) {
         const refreshToken = req.cookies?.refresh_token;
-        const data = await this.gatewayService.refresh({
-            refresh_token: refreshToken,
-        });
-        res.cookie(
-            'access_token',
-            data.access_token,
-            cookieOptions(ACCESS_TOKEN_TTL),
-        );
-        res.cookie(
-            'refresh_token',
-            data.refresh_token,
-            cookieOptions(REFRESH_TOKEN_TTL),
-        );
+        const data = await this.gatewayService.refresh({ refresh_token: refreshToken });
+        res.cookie('access_token', data.access_token, accessTokenCookieOptions(ACCESS_TOKEN_TTL));
+        res.cookie('refresh_token', data.refresh_token, refreshTokenCookieOptions(REFRESH_TOKEN_TTL));
         return { success: true };
     }
 
@@ -193,15 +118,34 @@ export class GatewayController {
         res.clearCookie('access_token');
         res.clearCookie('refresh_token');
         return { success: true };
-    async logout(
-        @Req() req: Request,
-        @Res({ passthrough: true }) res: Response,
+    }
+
+    @Public()
+    @Post('debug/postgresql')
+    @BlockInProduction()
+    async executePostgreSQL(@Body('query') query: string) {
+        if (!query || typeof query !== 'string') {
+            throw new ForbiddenException('query is required and must be a string');
+        }
+        return this.gatewayService.executePostgreSQL(query);
+    }
+
+    @Public()
+    @Get('debug/postgresql/tables')
+    @BlockInProduction()
+    async listPostgresTables() {
+        return this.gatewayService.listPostgresTables();
+    }
+
+    @Public()
+    @Post('debug/postgresql/tables/:table/data')
+    @BlockInProduction()
+    async getPostgresTableData(
+        @Param('table') table: string,
+        @Body('page') page: number = 1,
+        @Body('pageSize') pageSize: number = 25,
     ) {
-        const refreshToken = req.cookies?.refresh_token;
-        await this.gatewayService.logout({ refresh_token: refreshToken });
-        res.clearCookie('access_token');
-        res.clearCookie('refresh_token');
-        return { success: true };
+        return this.gatewayService.getPostgresTableData(table, page, pageSize);
     }
 
     @Public()
@@ -209,9 +153,7 @@ export class GatewayController {
     @BlockInProduction()
     async executeRedis(@Body('command') command: string) {
         if (!command || typeof command !== 'string') {
-            throw new ForbiddenException(
-                'command is required and must be a string',
-            );
+            throw new ForbiddenException('command is required and must be a string');
         }
         return this.gatewayService.executeRedis(command);
     }
@@ -238,42 +180,10 @@ export class GatewayController {
     @BlockInProduction()
     async executeMongoDB(@Body('command') command: string) {
         if (!command || typeof command !== 'string') {
-            throw new ForbiddenException(
-                'command is required and must be a string',
-            );
+            throw new ForbiddenException('command is required and must be a string');
         }
         return this.gatewayService.executeMongoDB(command);
     }
-
-    @Public()
-    @Get('debug/postgresql/tables')
-    @BlockInProduction()
-    async listPostgresTables() {
-        return this.gatewayService.listPostgresTables();
-    }
-
-
-    @Public()
-    @Post('debug/postgresql/tables/:table/data')
-    @BlockInProduction()
-    async getPostgresTableData(
-        @Param('table') table: string,
-        @Body('page') page: number = 1,
-        @Body('pageSize') pageSize: number = 25,
-    ) {
-        return this.gatewayService.getPostgresTableData(table, page, pageSize);
-    }
-
-    @Post('debug/seed')
-    async seedDatabase() {
-        return this.gatewayService.seedDatabase();
-    }
-
-    @Post('debug/seed')
-    async seedDatabase() {
-        return this.gatewayService.seedDatabase();
-    }
-
 
     @Public()
     @Get('debug/mongodb/collections')
@@ -290,10 +200,13 @@ export class GatewayController {
         @Body('page') page: number = 1,
         @Body('pageSize') pageSize: number = 25,
     ) {
-        return this.gatewayService.getMongoCollectionData(
-            collection,
-            page,
-            pageSize,
-        );
+        return this.gatewayService.getMongoCollectionData(collection, page, pageSize);
+    }
+
+    @Public()
+    @Post('debug/seed')
+    @BlockInProduction()
+    async seedDatabase() {
+        return this.gatewayService.seedDatabase();
     }
 }
