@@ -17,9 +17,13 @@ export default defineNuxtPlugin((nuxtApp) => {
     if (typeof window !== 'undefined') {
         /** Listener for unhandled promise rejections. */
         window.addEventListener('unhandledrejection', (event) => {
-            logError('error', event.reason?.toString() || 'Unhandled promise rejection', {
-                stack: event.reason?.stack,
-            });
+            logError(
+                'error',
+                event.reason?.toString() || 'Unhandled promise rejection',
+                {
+                    stack: event.reason?.stack,
+                },
+            );
         });
     }
 });
