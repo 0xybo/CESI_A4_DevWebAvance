@@ -18,8 +18,8 @@ import { Public } from './decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
 import { GatewayService } from './gateway.service';
 
-const ACCESS_TOKEN_TTL = 3 * 60 * 1000;
-const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60 * 1000;
+const ACCESS_TOKEN_TTL = parseInt(process.env.JWT_ACCESS_TTL || '180') * 1000;
+const REFRESH_TOKEN_TTL = parseInt(process.env.JWT_REFRESH_TTL || '604800') * 1000;
 
 const accessTokenCookieOptions = (maxAge: number) => ({
     httpOnly: false,
