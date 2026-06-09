@@ -5,17 +5,14 @@ import { RabbitMQService } from '@app/rabbitmq';
 import { RedisService } from '@app/redis';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 
+/** Service aggregating health checks, auth proxy, and debug operations for the gateway. */
 @Injectable()
 export class GatewayService {
+    /** Internal URLs of each microservice. */
     private readonly serviceUrls = {
-        auth:
-            process.env.AUTH_SERVICE_URL ||
-            'http://transvirex-authentication:3000',
-        billing:
-            process.env.BILLING_SERVICE_URL || 'http://transvirex-billing:3000',
-        delivery:
-            process.env.DELIVERY_SERVICE_URL ||
-            'http://transvirex-delivery:3000',
+        auth: process.env.AUTH_SERVICE_URL || 'http://transvirex-authentication:3000',
+        billing: process.env.BILLING_SERVICE_URL || 'http://transvirex-billing:3000',
+        delivery: process.env.DELIVERY_SERVICE_URL || 'http://transvirex-delivery:3000',
         stock: process.env.STOCK_SERVICE_URL || 'http://transvirex-stock:3000',
         users: process.env.USERS_SERVICE_URL || 'http://transvirex-users:3000',
     };
@@ -27,6 +24,7 @@ export class GatewayService {
         private readonly mongoDBService: MongoDBService,
     ) {}
 
+    /** Fetch the health status of a downstream service. */
     private async fetchHealth(service: string, baseUrl: string) {
         try {
             const response = await fetch(`${baseUrl}/health`, {
@@ -41,11 +39,8 @@ export class GatewayService {
         }
     }
 
-    private buildUserHeaders(user?: {
-        sub: string;
-        email: string;
-        role: string;
-    }): Record<string, string> {
+    /** Build headers to propagate user identity to downstream services. */
+    private buildUserHeaders(user?: { sub: string; email: string; role: string }): Record<string, string> {
         if (!user) return {};
         return {
             'X-User-Id': user.sub,
@@ -54,11 +49,8 @@ export class GatewayService {
         };
     }
 
-    private async proxyPost(
-        url: string,
-        body: unknown,
-        user?: { sub: string; email: string; role: string },
-    ) {
+    /** Proxy a POST request to a downstream microservice. */
+    private async proxyPost(url: string, body: unknown, user?: { sub: string; email: string; role: string }) {
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -81,10 +73,8 @@ export class GatewayService {
         }
     }
 
-    private async proxyGet(
-        url: string,
-        user?: { sub: string; email: string; role: string },
-    ) {
+    /** Proxy a GET request to a downstream microservice. */
+    private async proxyGet(url: string, user?: { sub: string; email: string; role: string }) {
         try {
             const response = await fetch(url, {
                 headers: this.buildUserHeaders(user),
@@ -103,59 +93,65 @@ export class GatewayService {
     }
 
     login(body: { email: string; password: string }) {
-        return this.proxyPost(
-            `${this.serviceUrls.auth}/auth/login`,
-            body,
-        ) as Promise<{ access_token: string; refresh_token: string }>;
+        return this.proxyPost(`${this.serviceUrls.auth}/auth/login`, body) as Promise<{
+            access_token: string;
+            refresh_token: string;
+        }>;
     }
 
     refresh(body: { refresh_token: string }) {
-        return this.proxyPost(
-            `${this.serviceUrls.auth}/auth/refresh`,
-            body,
-        ) as Promise<{ access_token: string; refresh_token: string }>;
+        return this.proxyPost(`${this.serviceUrls.auth}/auth/refresh`, body) as Promise<{
+            access_token: string;
+            refresh_token: string;
+        }>;
     }
 
     logout(body: { refresh_token: string }) {
-        return this.proxyPost(
-            `${this.serviceUrls.auth}/auth/logout`,
-            body,
-        ) as Promise<{ success: boolean }>;
+        return this.proxyPost(`${this.serviceUrls.auth}/auth/logout`, body) as Promise<{ success: boolean }>;
     }
 
+    /** Return a simple greeting message. */
     getHello(): string {
         return 'Hello World!';
     }
 
+    /** Return the gateway's own health status. */
     getGatewayHealth() {
         return { status: 'ok' };
     }
 
+    /** Proxy health check to the authentication service. */
     getAuthHealth() {
         return this.fetchHealth('auth', this.serviceUrls.auth);
     }
 
+    /** Proxy health check to the billing service. */
     getBillingHealth() {
         return this.fetchHealth('billing', this.serviceUrls.billing);
     }
 
+    /** Proxy health check to the stock service. */
     getStockHealth() {
         return this.fetchHealth('stock', this.serviceUrls.stock);
     }
 
+    /** Proxy health check to the delivery service. */
     getDeliveryHealth() {
         return this.fetchHealth('delivery', this.serviceUrls.delivery);
     }
 
+    /** Proxy health check to the users service. */
     getUsersHealth() {
         return this.fetchHealth('users', this.serviceUrls.users);
     }
 
+    /** Seed the database with test data (force re-seed). */
     async seedDatabase() {
         const result = await runSeed(this.prisma, true);
         return { success: true, ...result };
     }
 
+    /** Execute a raw SQL query on PostgreSQL. */
     async executePostgreSQL(query: string) {
         const result = await this.prisma.$queryRawUnsafe(query);
         const rows = result as Record<string, unknown>[];
@@ -163,22 +159,27 @@ export class GatewayService {
         return { columns, rows, rowCount: rows.length };
     }
 
+    /** Execute a Redis command. */
     executeRedis(command: string) {
         return this.redisService.executeCommand(command);
     }
 
+    /** List all RabbitMQ queues. */
     listRabbitMQQueues() {
         return this.rabbitMQService.listQueues();
     }
 
+    /** Fetch messages from a RabbitMQ queue. */
     getRabbitMQMessages(queue: string, count: number) {
         return this.rabbitMQService.getMessages(queue, count);
     }
 
+    /** Execute a MongoDB command. */
     executeMongoDB(command: string) {
         return this.mongoDBService.executeCommand(command);
     }
 
+    /** List all PostgreSQL tables. */
     async listPostgresTables() {
         const result = await this.prisma.$queryRawUnsafe(
             `SELECT table_name, table_schema FROM information_schema.tables WHERE table_schema NOT IN ('pg_catalog', 'information_schema') ORDER BY table_schema, table_name`,
@@ -186,14 +187,15 @@ export class GatewayService {
         return { tables: result as any[] };
     }
 
+    /** Fetch paginated data from a PostgreSQL table. */
     async getPostgresTableData(table: string, page: number, pageSize: number) {
         const offset = (page - 1) * pageSize;
-        const rows = await this.prisma.$queryRawUnsafe<
-            { [key: string]: unknown }[]
-        >(`SELECT * FROM "${table}" LIMIT ${pageSize} OFFSET ${offset}`);
-        const countResult = await this.prisma.$queryRawUnsafe<
-            { count: string }[]
-        >(`SELECT COUNT(*) as count FROM "${table}"`);
+        const rows = await this.prisma.$queryRawUnsafe<{ [key: string]: unknown }[]>(
+            `SELECT * FROM "${table}" LIMIT ${pageSize} OFFSET ${offset}`,
+        );
+        const countResult = await this.prisma.$queryRawUnsafe<{ count: string }[]>(
+            `SELECT COUNT(*) as count FROM "${table}"`,
+        );
         const totalCount = Number(countResult[0]?.count ?? 0);
         const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
         return {
@@ -206,6 +208,7 @@ export class GatewayService {
         };
     }
 
+    /** List all MongoDB collections. */
     async listMongoCollections() {
         const db = await this.mongoDBService.getDb();
         const collections = await db.listCollections().toArray();
@@ -216,11 +219,8 @@ export class GatewayService {
         };
     }
 
-    async getMongoCollectionData(
-        collection: string,
-        page: number,
-        pageSize: number,
-    ) {
+    /** Fetch paginated documents from a MongoDB collection. */
+    async getMongoCollectionData(collection: string, page: number, pageSize: number) {
         const db = await this.mongoDBService.getDb();
         const coll = db.collection(collection);
         const offset = (page - 1) * pageSize;
@@ -241,11 +241,8 @@ export class GatewayService {
         };
     }
 
-    async logFromFrontend(body: {
-        level: string;
-        message: string;
-        metadata?: Record<string, unknown>;
-    }) {
+    /** Persist a frontend log entry to MongoDB. */
+    async logFromFrontend(body: { level: string; message: string; metadata?: Record<string, unknown> }) {
         const db = await this.mongoDBService.getDb();
         await db.collection('frontend_logs').insertOne({
             level: body.level || 'error',
@@ -256,13 +253,8 @@ export class GatewayService {
         return { success: true };
     }
 
-    async getLogs(
-        collectionName: string,
-        level?: string,
-        service?: string,
-        page: number = 1,
-        pageSize: number = 50,
-    ) {
+    /** Retrieve paginated logs from a MongoDB collection with optional filters. */
+    async getLogs(collectionName: string, level?: string, service?: string, page: number = 1, pageSize: number = 50) {
         const db = await this.mongoDBService.getDb();
         const coll = db.collection(collectionName);
 
@@ -272,12 +264,7 @@ export class GatewayService {
 
         const offset = (page - 1) * pageSize;
         const totalCount = await coll.countDocuments(filter);
-        const raw = await coll
-            .find(filter)
-            .sort({ timestamp: -1 })
-            .skip(offset)
-            .limit(pageSize)
-            .toArray();
+        const raw = await coll.find(filter).sort({ timestamp: -1 }).skip(offset).limit(pageSize).toArray();
 
         const logs = raw.map((r: Record<string, unknown>) => {
             const { _id, ...rest } = r;
@@ -293,6 +280,7 @@ export class GatewayService {
         };
     }
 
+    /** Delete all documents from a log collection. */
     async clearLogs(collectionName: string) {
         const db = await this.mongoDBService.getDb();
         const result = await db.collection(collectionName).deleteMany({});

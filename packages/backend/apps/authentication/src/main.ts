@@ -4,8 +4,10 @@ import { Transport } from '@nestjs/microservices';
 import { LoggingService, LoggingInterceptor } from '@app/logging';
 import { AuthenticationModule } from './authentication.module';
 
+/** Global app reference used for graceful shutdown. */
 let app: INestApplication;
 
+/** Bootstrap the authentication microservice with HTTP + RabbitMQ transport. */
 async function bootstrap() {
     app = await NestFactory.create(AuthenticationModule, { bufferLogs: true });
 
@@ -32,12 +34,10 @@ async function bootstrap() {
 
     const PORT = process.env.PORT || 3000;
     await app.listen(PORT);
-    logger.log(
-        `Authentication service listening on port ${PORT} (HTTP + RabbitMQ)`,
-        'Bootstrap',
-    );
+    logger.log(`Authentication service listening on port ${PORT} (HTTP + RabbitMQ)`, 'Bootstrap');
 }
 
+/** Graceful shutdown on SIGTERM. */
 process.on('SIGTERM', async () => {
     if (app) await app.close();
     process.exit(0);

@@ -13,7 +13,10 @@
                         <CardTitle class="text-3xl">{{ kpi.value }}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div class="flex items-center gap-1 text-xs" :class="kpi.trend >= 0 ? 'text-green-600' : 'text-red-500'">
+                        <div
+                            class="flex items-center gap-1 text-xs"
+                            :class="kpi.trend >= 0 ? 'text-green-600' : 'text-red-500'"
+                        >
                             <TrendingUp v-if="kpi.trend >= 0" class="w-3.5 h-3.5" />
                             <TrendingDown v-else class="w-3.5 h-3.5" />
                             {{ Math.abs(kpi.trend) }}% vs hier
@@ -55,10 +58,21 @@
                             </template>
                         </ClientOnly>
                         <div class="mt-4 grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs w-full">
-                            <div v-for="(label, i) in doughnutData.labels" :key="String(label)" class="flex items-center gap-1.5">
-                                <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" :style="{ background: String((doughnutData.datasets[0].backgroundColor as string[])[i]) }" />
+                            <div
+                                v-for="(label, i) in doughnutData.labels"
+                                :key="String(label)"
+                                class="flex items-center gap-1.5"
+                            >
+                                <span
+                                    class="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                                    :style="{
+                                        background: String((doughnutData.datasets[0].backgroundColor as string[])[i]),
+                                    }"
+                                />
                                 <span>{{ label }}</span>
-                                <span class="text-muted-foreground ml-auto">{{ doughnutData.datasets[0].data[i] }}%</span>
+                                <span class="text-muted-foreground ml-auto"
+                                    >{{ doughnutData.datasets[0].data[i] }}%</span
+                                >
                             </div>
                         </div>
                     </CardContent>
@@ -124,7 +138,9 @@
                                 <TableCell>{{ d.destination }}</TableCell>
                                 <TableCell class="text-muted-foreground">{{ d.driver }}</TableCell>
                                 <TableCell class="text-muted-foreground">{{ d.client }}</TableCell>
-                                <TableCell><Badge :class="statusClass(d.status)">{{ d.status }}</Badge></TableCell>
+                                <TableCell
+                                    ><Badge :class="statusClass(d.status)">{{ d.status }}</Badge></TableCell
+                                >
                                 <TableCell class="font-mono text-xs text-muted-foreground">{{ d.time }}</TableCell>
                             </TableRow>
                         </TableBody>
@@ -136,22 +152,43 @@
 </template>
 
 <script setup lang="ts">
-import { Bar, Line, Doughnut } from 'vue-chartjs';
-import {
-    Chart as ChartJS, Title, Tooltip, Legend,
-    BarElement, CategoryScale, LinearScale,
-    LineElement, PointElement, ArcElement, Filler,
-} from 'chart.js';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
-import { TrendingUp, TrendingDown } from 'lucide-vue-next';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { TrendingDown, TrendingUp } from '@lucide/vue';
+import {
+    ArcElement,
+    BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Filler,
+    Legend,
+    LinearScale,
+    LineElement,
+    PointElement,
+    Title,
+    Tooltip,
+} from 'chart.js';
+import { Bar, Doughnut, Line } from 'vue-chartjs';
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, LineElement, PointElement, ArcElement, Filler);
+/** Register Chart.js components used across dashboard charts. */
+ChartJS.register(
+    Title,
+    Tooltip,
+    Legend,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    LineElement,
+    PointElement,
+    ArcElement,
+    Filler,
+);
 
 definePageMeta({ layout: false });
 useHead({ title: 'Dashboard Admin — Transvirex' });
 
+/** KPI metric cards for the admin dashboard. */
 const kpis = [
     { label: "Livraisons aujourd'hui", value: '247', trend: 12 },
     { label: 'Stock disponible', value: '1 284', trend: -3 },
@@ -159,36 +196,116 @@ const kpis = [
     { label: 'Revenu mensuel', value: '€ 124 500', trend: 8 },
 ];
 
+/** Recent deliveries data for the activity table. */
 const recentDeliveries = [
-    { id: '#LIV-0091', destination: 'Paris 15e', driver: 'M. Dupont', client: 'Société Durand', status: 'Livré', time: '08:32' },
-    { id: '#LIV-0092', destination: 'Lyon Part-Dieu', driver: 'S. Martin', client: 'SARL Martin', status: 'En cours', time: '09:14' },
-    { id: '#LIV-0093', destination: 'Bordeaux Centre', driver: 'A. Bernard', client: 'Express Cargo', status: 'En attente', time: '10:05' },
-    { id: '#LIV-0094', destination: 'Marseille 13e', driver: 'J. Thomas', client: 'TGV Express', status: 'Livré', time: '10:22' },
-    { id: '#LIV-0095', destination: 'Lille Centre', driver: 'R. Petit', client: 'Logistics Plus', status: 'En cours', time: '11:00' },
-    { id: '#LIV-0096', destination: 'Nantes Ouest', driver: 'C. Leroy', client: 'Nord Fret', status: 'Retardé', time: '11:45' },
+    {
+        id: '#LIV-0091',
+        destination: 'Paris 15e',
+        driver: 'M. Dupont',
+        client: 'Société Durand',
+        status: 'Livré',
+        time: '08:32',
+    },
+    {
+        id: '#LIV-0092',
+        destination: 'Lyon Part-Dieu',
+        driver: 'S. Martin',
+        client: 'SARL Martin',
+        status: 'En cours',
+        time: '09:14',
+    },
+    {
+        id: '#LIV-0093',
+        destination: 'Bordeaux Centre',
+        driver: 'A. Bernard',
+        client: 'Express Cargo',
+        status: 'En attente',
+        time: '10:05',
+    },
+    {
+        id: '#LIV-0094',
+        destination: 'Marseille 13e',
+        driver: 'J. Thomas',
+        client: 'TGV Express',
+        status: 'Livré',
+        time: '10:22',
+    },
+    {
+        id: '#LIV-0095',
+        destination: 'Lille Centre',
+        driver: 'R. Petit',
+        client: 'Logistics Plus',
+        status: 'En cours',
+        time: '11:00',
+    },
+    {
+        id: '#LIV-0096',
+        destination: 'Nantes Ouest',
+        driver: 'C. Leroy',
+        client: 'Nord Fret',
+        status: 'Retardé',
+        time: '11:45',
+    },
 ];
 
+/**
+ * Return Tailwind CSS classes for a delivery status badge.
+ */
 function statusClass(s: string) {
-    return ({ 'Livré': 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100', 'En cours': 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100', 'En attente': 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100', 'Retardé': 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100' } as Record<string, string>)[s] ?? '';
+    return (
+        (
+            {
+                Livré: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100',
+                'En cours': 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
+                'En attente': 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+                Retardé: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
+            } as Record<string, string>
+        )[s] ?? ''
+    );
 }
 
+/** Chart axis tick font configuration. */
 const tickFont = { size: 11 };
+/** Chart grid line color. */
 const gridColor = 'rgba(0,0,0,0.06)';
 
+/** Stacked bar chart data: monthly document counts (devis, bons de commande, factures). */
 const barData = {
     labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
     datasets: [
-        { label: 'Devis', data: [45, 52, 38, 61, 49, 57], backgroundColor: '#fbbf24', borderRadius: 4, borderSkipped: false },
-        { label: 'Bons de commande', data: [38, 44, 31, 55, 42, 48], backgroundColor: '#60a5fa', borderRadius: 4, borderSkipped: false },
-        { label: 'Factures', data: [32, 39, 28, 47, 36, 43], backgroundColor: '#34d399', borderRadius: 4, borderSkipped: false },
+        {
+            label: 'Devis',
+            data: [45, 52, 38, 61, 49, 57],
+            backgroundColor: '#fbbf24',
+            borderRadius: 4,
+            borderSkipped: false,
+        },
+        {
+            label: 'Bons de commande',
+            data: [38, 44, 31, 55, 42, 48],
+            backgroundColor: '#60a5fa',
+            borderRadius: 4,
+            borderSkipped: false,
+        },
+        {
+            label: 'Factures',
+            data: [32, 39, 28, 47, 36, 43],
+            backgroundColor: '#34d399',
+            borderRadius: 4,
+            borderSkipped: false,
+        },
     ],
 };
 
+/** Stacked bar chart options configuration. */
 const barOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-        legend: { position: 'bottom' as const, labels: { boxWidth: 10, padding: 16, font: tickFont } },
+        legend: {
+            position: 'bottom' as const,
+            labels: { boxWidth: 10, padding: 16, font: tickFont },
+        },
         tooltip: { mode: 'index' as const, intersect: false },
     },
     scales: {
@@ -197,40 +314,55 @@ const barOptions = {
     },
 };
 
+/** Doughnut chart data: delivery status distribution. */
 const doughnutData = {
     labels: ['Livré', 'En cours', 'En attente', 'Retardé', 'Annulé'],
-    datasets: [{
-        data: [58, 18, 12, 7, 5],
-        backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280'],
-        borderWidth: 0,
-        hoverOffset: 6,
-    }],
+    datasets: [
+        {
+            data: [58, 18, 12, 7, 5],
+            backgroundColor: ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#6b7280'],
+            borderWidth: 0,
+            hoverOffset: 6,
+        },
+    ],
 };
 
+/** Doughnut chart options configuration. */
 const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
         legend: { display: false },
-        tooltip: { callbacks: { label: (ctx: { label: string; parsed: number }) => ` ${ctx.label}: ${ctx.parsed}%` } },
+        tooltip: {
+            callbacks: {
+                label: (ctx: { label: string; parsed: number }) => ` ${ctx.label}: ${ctx.parsed}%`,
+            },
+        },
     },
     cutout: '68%',
 };
 
+/** Line chart data: daily delivery volume over 30 days. */
 const lineData = {
-    labels: Array.from({ length: 30 }, (_, i) => i % 5 === 0 ? `J-${29 - i}` : ''),
-    datasets: [{
-        label: 'Livraisons',
-        data: [210, 225, 198, 240, 255, 230, 218, 262, 244, 258, 235, 270, 248, 232, 265, 278, 255, 242, 268, 283, 260, 247, 271, 289, 265, 253, 278, 294, 272, 247],
-        borderColor: '#3b82f6',
-        backgroundColor: 'rgba(59,130,246,0.08)',
-        fill: true,
-        tension: 0.4,
-        pointRadius: 0,
-        borderWidth: 2,
-    }],
+    labels: Array.from({ length: 30 }, (_, i) => (i % 5 === 0 ? `J-${29 - i}` : '')),
+    datasets: [
+        {
+            label: 'Livraisons',
+            data: [
+                210, 225, 198, 240, 255, 230, 218, 262, 244, 258, 235, 270, 248, 232, 265, 278, 255, 242, 268, 283, 260,
+                247, 271, 289, 265, 253, 278, 294, 272, 247,
+            ],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.08)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0,
+            borderWidth: 2,
+        },
+    ],
 };
 
+/** Line chart options configuration. */
 const lineOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -244,6 +376,7 @@ const lineOptions = {
     },
 };
 
+/** Projection chart data: actual vs forecasted monthly revenue. */
 const projectionData = {
     labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
     datasets: [
@@ -270,11 +403,15 @@ const projectionData = {
     ],
 };
 
+/** Projection chart options configuration. */
 const projectionOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-        legend: { position: 'bottom' as const, labels: { boxWidth: 10, padding: 16, font: tickFont } },
+        legend: {
+            position: 'bottom' as const,
+            labels: { boxWidth: 10, padding: 16, font: tickFont },
+        },
         tooltip: {
             mode: 'index' as const,
             intersect: false,
@@ -288,7 +425,10 @@ const projectionOptions = {
         x: { grid: { display: false }, ticks: { font: tickFont } },
         y: {
             grid: { color: gridColor },
-            ticks: { font: tickFont, callback: (v: number | string) => `${Number(v) / 1000}k` },
+            ticks: {
+                font: tickFont,
+                callback: (v: number | string) => `${Number(v) / 1000}k`,
+            },
         },
     },
 };

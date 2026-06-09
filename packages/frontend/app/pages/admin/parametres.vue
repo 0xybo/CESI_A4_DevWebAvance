@@ -30,14 +30,19 @@
                     <div v-for="notif in notifications" :key="notif.label" class="flex items-center justify-between">
                         <div>
                             <p class="text-sm font-medium">{{ notif.label }}</p>
-                            <p class="text-xs text-muted-foreground">{{ notif.desc }}</p>
+                            <p class="text-xs text-muted-foreground">
+                                {{ notif.desc }}
+                            </p>
                         </div>
                         <button
                             @click="notif.enabled = !notif.enabled"
                             class="relative w-10 h-5 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                             :class="notif.enabled ? 'bg-primary' : 'bg-muted-foreground/30'"
                         >
-                            <div class="w-4 h-4 bg-white rounded-full shadow absolute top-0.5 transition-transform" :class="notif.enabled ? 'translate-x-5' : 'translate-x-0.5'" />
+                            <div
+                                class="w-4 h-4 bg-white rounded-full shadow absolute top-0.5 transition-transform"
+                                :class="notif.enabled ? 'translate-x-5' : 'translate-x-0.5'"
+                            />
                         </button>
                     </div>
                 </CardContent>
@@ -59,10 +64,27 @@ import { Label } from '@/components/ui/label';
 definePageMeta({ layout: false });
 useHead({ title: 'Paramètres — Transvirex' });
 
+/** Platform notification toggles. */
 const notifications = reactive([
-    { label: 'Livraisons retardées', desc: 'Alerte quand une livraison dépasse le délai prévu', enabled: true },
-    { label: 'Nouveaux clients', desc: 'Notification à chaque nouveau client créé', enabled: false },
-    { label: 'Rapport journalier', desc: 'Résumé automatique chaque matin à 8h', enabled: true },
-    { label: 'Alertes critiques', desc: 'Colis endommagés, chauffeur non joignable', enabled: true },
+    {
+        label: 'Livraisons retardées',
+        desc: 'Alerte quand une livraison dépasse le délai prévu',
+        enabled: true,
+    },
+    {
+        label: 'Nouveaux clients',
+        desc: 'Notification à chaque nouveau client créé',
+        enabled: false,
+    },
+    {
+        label: 'Rapport journalier',
+        desc: 'Résumé automatique chaque matin à 8h',
+        enabled: true,
+    },
+    {
+        label: 'Alertes critiques',
+        desc: 'Colis endommagés, chauffeur non joignable',
+        enabled: true,
+    },
 ]);
 </script>

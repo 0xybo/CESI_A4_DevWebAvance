@@ -1,14 +1,11 @@
 import { LoggingInterceptor, LoggingService } from '@app/logging';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import {
-    DocumentBuilder,
-    SwaggerDocumentOptions,
-    SwaggerModule,
-} from '@nestjs/swagger';
+import { DocumentBuilder, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { GatewayModule } from './gateway.module';
 
+/** Bootstrap the API gateway with Swagger docs, cookie parsing, and global validation. */
 async function bootstrap() {
     const app = await NestFactory.create(GatewayModule, { bufferLogs: true });
 
@@ -18,12 +15,9 @@ async function bootstrap() {
     app.useGlobalInterceptors(app.get(LoggingInterceptor));
 
     app.use(cookieParser());
-    app.useGlobalPipes(
-        new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
-    );
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
     app.setGlobalPrefix('api');
 
-    // Swagger / OpenAPI documentation
     const swaggerConfig = new DocumentBuilder()
         .setTitle('Transvirex ERP - Gateway API')
         .setDescription(
@@ -36,16 +30,14 @@ async function bootstrap() {
                 type: 'http',
                 scheme: 'bearer',
                 bearerFormat: 'JWT',
-                description:
-                    'JWT access token (set via cookie "access_token" on login)',
+                description: 'JWT access token (set via cookie "access_token" on login)',
             },
             'JWT-auth',
         )
         .build();
 
     const options: SwaggerDocumentOptions = {
-        operationIdFactory: (_controllerKey: string, methodKey: string) =>
-            methodKey,
+        operationIdFactory: (_controllerKey: string, methodKey: string) => methodKey,
     };
 
     const document = SwaggerModule.createDocument(app, swaggerConfig, options);
