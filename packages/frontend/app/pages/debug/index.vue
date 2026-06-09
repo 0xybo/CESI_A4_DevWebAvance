@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia';
 useHead({ title: 'Debug Dashboard — Transvirex' });
 
 const health = useHealthStore();
+/** Destructured reactive references to health store state. */
 const { servicesOk, servicesError, lastChecked, services } =
     storeToRefs(health);
 </script>

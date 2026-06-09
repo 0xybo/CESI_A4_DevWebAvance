@@ -22,10 +22,11 @@ useHead({ title: 'Console Redis — Transvirex' });
 
 const redis = useRedisStore();
 
+/** Quick-access Redis command presets with descriptions. */
 const commonCommands = [
     { cmd: 'KEYS *', desc: 'Lister toutes les clés' },
-    { cmd: 'TYPE {clé}', desc: 'Type d\'une clé' },
-    { cmd: 'GET {clé}', desc: 'Lire la valeur d\'une clé' },
+    { cmd: 'TYPE {clé}', desc: "Type d'une clé" },
+    { cmd: 'GET {clé}', desc: "Lire la valeur d'une clé" },
     { cmd: 'TTL {clé}', desc: 'Temps restant avant expiration' },
     { cmd: 'INFO', desc: 'Informations du serveur' },
     { cmd: 'DBSIZE', desc: 'Nombre total de clés' },
@@ -33,6 +34,7 @@ const commonCommands = [
     { cmd: 'PING', desc: 'Tester la connexion' },
 ];
 
+/** Insert a quick-command into the Redis command input. */
 function insertCommand(cmd: string) {
     redis.command = cmd;
 }
@@ -41,9 +43,7 @@ function insertCommand(cmd: string) {
 <template>
     <div class="max-w-6xl mx-auto space-y-8">
         <div class="space-y-1">
-            <h1 class="text-3xl font-bold text-slate-900">
-                Console Redis
-            </h1>
+            <h1 class="text-3xl font-bold text-slate-900">Console Redis</h1>
             <p class="text-gray-500">
                 Exécuter des commandes Redis sur le serveur de cache
             </p>
@@ -104,7 +104,9 @@ function insertCommand(cmd: string) {
                                         d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                                     />
                                 </svg>
-                                {{ redis.loading ? 'Exécution...' : 'Exécuter' }}
+                                {{
+                                    redis.loading ? 'Exécution...' : 'Exécuter'
+                                }}
                             </Button>
                         </div>
                     </CardContent>
@@ -177,7 +179,8 @@ function insertCommand(cmd: string) {
                                 />
                             </svg>
                             <p class="text-gray-500">
-                                Exécutez une commande Redis pour voir le résultat
+                                Exécutez une commande Redis pour voir le
+                                résultat
                             </p>
                         </div>
                     </CardContent>

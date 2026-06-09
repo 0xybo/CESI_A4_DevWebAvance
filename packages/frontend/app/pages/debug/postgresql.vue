@@ -33,14 +33,20 @@ import { useSqlStore } from '@/stores/sql';
 useHead({ title: 'Console PostgreSQL — Transvirex' });
 
 const sql = useSqlStore();
+/** Whether the save-query dialog is visible. */
 const showSaveDialog = ref(false);
+/** Whether the rename-query dialog is visible. */
 const showRenameDialog = ref(false);
+/** Name input for saving a query. */
 const saveName = ref('');
+/** Name input for renaming a query. */
 const renameName = ref('');
+/** ID of the query currently being renamed. */
 const renamingId = ref<string | null>(null);
 
 onMounted(() => sql.fetchTables());
 
+/** Save current query with the entered name. */
 function handleSave() {
     if (!saveName.value.trim()) return;
     sql.saveQuery(saveName.value.trim());
@@ -48,12 +54,14 @@ function handleSave() {
     showSaveDialog.value = false;
 }
 
+/** Open rename dialog for a saved query. */
 function rename(saved: { id: string; name: string }) {
     renamingId.value = saved.id;
     renameName.value = saved.name;
     showRenameDialog.value = true;
 }
 
+/** Execute the rename action. */
 function handleRename() {
     if (!renameName.value.trim() || !renamingId.value) return;
     sql.renameQuery(renamingId.value, renameName.value.trim());
@@ -62,6 +70,7 @@ function handleRename() {
     showRenameDialog.value = false;
 }
 
+/** Select a table and fetch its first page of data. */
 function selectTable(name: string) {
     sql.tablePage = 1;
     sql.fetchTableData(name);

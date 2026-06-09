@@ -33,14 +33,21 @@ import { useMongoDBStore } from '@/stores/mongodb';
 useHead({ title: 'Console MongoDB — Transvirex' });
 
 const mongodb = useMongoDBStore();
+/** Whether the save-query dialog is visible. */
 const showSaveDialog = ref(false);
+/** Whether the rename-query dialog is visible. */
 const showRenameDialog = ref(false);
+/** Name input for saving a query. */
 const saveName = ref('');
+/** Name input for renaming a query. */
 const renameName = ref('');
+/** ID of the query currently being renamed. */
 const renamingId = ref<string | null>(null);
 
+/** LocalStorage key for persisting saved MongoDB queries. */
 const STORAGE_KEY = 'transvirex:saved-mongo-queries';
 
+/** A saved MongoDB query with a user-defined name. */
 interface SavedQuery {
     id: string;
     name: string;
@@ -48,8 +55,10 @@ interface SavedQuery {
     createdAt: string;
 }
 
+/** List of user-saved MongoDB queries loaded from localStorage. */
 const savedQueries = ref<SavedQuery[]>([]);
 
+/** Load saved queries from localStorage. */
 function loadSaved() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -59,6 +68,7 @@ function loadSaved() {
     }
 }
 
+/** Persist saved queries to localStorage. */
 function persistSaved() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(savedQueries.value));
 }
@@ -67,6 +77,7 @@ loadSaved();
 
 onMounted(() => mongodb.fetchCollections());
 
+/** Save current command as a new (or overwrite existing) query. */
 function handleSave() {
     if (!saveName.value.trim()) return;
     const existing = savedQueries.value.find(
@@ -88,6 +99,7 @@ function handleSave() {
     showSaveDialog.value = false;
 }
 
+/** Load a saved query's command into the editor. */
 function loadQuery(id: string) {
     const saved = savedQueries.value.find((q) => q.id === id);
     if (saved) {
@@ -95,17 +107,20 @@ function loadQuery(id: string) {
     }
 }
 
+/** Delete a saved query by ID. */
 function deleteQuery(id: string) {
     savedQueries.value = savedQueries.value.filter((q) => q.id !== id);
     persistSaved();
 }
 
+/** Open rename dialog for a saved query. */
 function rename(saved: SavedQuery) {
     renamingId.value = saved.id;
     renameName.value = saved.name;
     showRenameDialog.value = true;
 }
 
+/** Execute the rename action. */
 function handleRename() {
     if (!renameName.value.trim() || !renamingId.value) return;
     const saved = savedQueries.value.find((q) => q.id === renamingId.value);
@@ -118,6 +133,7 @@ function handleRename() {
     showRenameDialog.value = false;
 }
 
+/** Select a collection and fetch its first page of data. */
 function selectCollection(name: string) {
     mongodb.collectionPage = 1;
     mongodb.fetchCollectionData(name);

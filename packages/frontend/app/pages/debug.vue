@@ -15,10 +15,15 @@ import SidebarLink from '~/components/debug/SidebarLink.vue';
 
 const health = useHealthStore();
 const route = useRoute();
+/** Whether the database seeding operation is in progress. */
 const seeding = ref(false);
 
 onMounted(() => health.checkAll());
 
+/**
+ * Seed the database with demo data via the debug API.
+ * Displays a confirmation dialog before proceeding.
+ */
 async function handleSeed() {
     const confirmed = window.confirm('This will seed the database with demo data. Continue?');
     if (!confirmed) return;

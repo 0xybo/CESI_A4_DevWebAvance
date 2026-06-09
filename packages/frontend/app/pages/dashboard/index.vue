@@ -55,7 +55,9 @@
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm">
-                        <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                        <thead
+                            class="bg-gray-50 text-gray-500 text-xs uppercase"
+                        >
                             <tr>
                                 <th class="px-5 py-3 text-left font-medium">
                                     ID
@@ -184,6 +186,7 @@ import {
 definePageMeta({ layout: 'dashboard' });
 useHead({ title: 'Dashboard — Transvirex' });
 
+/** KPI metric cards displayed at the top of the dashboard. */
 const kpis = [
     {
         label: "Livraisons aujourd'hui",
@@ -219,6 +222,7 @@ const kpis = [
     },
 ];
 
+/** Recent deliveries data displayed in the activity table. */
 const recentDeliveries = [
     {
         id: '#LIV-0091',
@@ -264,6 +268,9 @@ const recentDeliveries = [
     },
 ];
 
+/**
+ * Return Tailwind CSS classes for a delivery status badge.
+ */
 function statusClass(status: string) {
     const map: Record<string, string> = {
         Livré: 'bg-green-100 text-green-700',
@@ -274,13 +281,19 @@ function statusClass(status: string) {
     return map[status] ?? 'bg-gray-100 text-gray-600';
 }
 
+/** Health status of a backend service. */
 interface ServiceHealth {
+    /** Service display name. */
     name: string;
+    /** Health check URL. */
     url: string;
+    /** Current health status. */
     status: 'pending' | 'ok' | 'error';
+    /** Response time in ms, or null. */
     ms: number | null;
 }
 
+/** List of backend services to monitor. */
 const services = ref<ServiceHealth[]>([
     {
         name: 'API Gateway',
@@ -320,8 +333,12 @@ const services = ref<ServiceHealth[]>([
     },
 ]);
 
+/** Whether the health check is currently running. */
 const healthLoading = ref(false);
 
+/**
+ * Check the health of all backend services concurrently.
+ */
 async function checkHealth() {
     healthLoading.value = true;
     await Promise.all(

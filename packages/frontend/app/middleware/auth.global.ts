@@ -1,5 +1,6 @@
 import type { UserRole } from '~/composables/useAuth';
 
+/** Maps each user role to their default dashboard route. */
 const ROLE_DASHBOARD: Record<UserRole, string> = {
     admin: '/admin/dashboard',
     dispatcher: '/dispatcher/dashboard',
@@ -7,6 +8,7 @@ const ROLE_DASHBOARD: Record<UserRole, string> = {
     business_manager: '/business/dashboard',
 };
 
+/** Maps each user role to the allowed URL prefix for their pages. */
 const ROLE_ALLOWED_PREFIX: Record<UserRole, string> = {
     admin: '/admin',
     dispatcher: '/dispatcher',
@@ -14,6 +16,13 @@ const ROLE_ALLOWED_PREFIX: Record<UserRole, string> = {
     business_manager: '/business',
 };
 
+/**
+ * Global authentication middleware.
+ * - Allows unauthenticated access to /debug pages.
+ * - Redirects authenticated users from login to their dashboard.
+ * - Redirects unauthenticated users from protected routes to login.
+ * - Enforces role-based access control by URL prefix.
+ */
 export default defineNuxtRouteMiddleware(async (to) => {
     // Pages toujours accessibles sans authentification
     if (to.path.startsWith('/debug')) return;

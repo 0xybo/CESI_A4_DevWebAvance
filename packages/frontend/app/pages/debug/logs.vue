@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -26,22 +25,29 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useLogsStore } from '@/stores/logs';
+import { useErrorLogger } from '@/composables/useErrorLogger';
 import type { LogEntry } from '@/stores/logs';
+import { useLogsStore } from '@/stores/logs';
+import { TestTube2Icon } from 'lucide-vue-next';
 
 useHead({ title: 'Logs — Transvirex' });
 
 const logs = useLogsStore();
+/** Whether the clear confirmation dialog is visible. */
 const showClearDialog = ref(false);
+/** Target log source for the clear action. */
 const clearTarget = ref<'backend' | 'frontend'>('backend');
+/** Set of row IDs currently expanded to show metadata. */
 const expandedRows = ref<Set<string>>(new Set());
 
+/** Available log-level filter options. */
 const levels = ['all', 'log', 'warn', 'error', 'debug', 'verbose'];
 
 onMounted(() => {
     logs.fetchBackendLogs();
 });
 
+/** Return Tailwind classes for a log-level badge. */
 function levelColor(level: string): string {
     switch (level) {
         case 'error':
@@ -59,6 +65,7 @@ function levelColor(level: string): string {
     }
 }
 
+/** Format an ISO timestamp to a French locale string. */
 function formatTimestamp(ts: string): string {
     const d = new Date(ts);
     return d.toLocaleString('fr-FR', {
@@ -71,6 +78,7 @@ function formatTimestamp(ts: string): string {
     });
 }
 
+/** Toggle expanded state for a log row. */
 function toggleRow(id: string) {
     if (expandedRows.value.has(id)) {
         expandedRows.value.delete(id);
@@ -79,7 +87,8 @@ function toggleRow(id: string) {
     }
 }
 
-function onTabChange(tab: string) {
+/** Fetch logs when switching between backend/frontend tabs. */
+function onTabChange(tab: string | number) {
     if (tab === 'backend' && logs.backendLogs.length === 0) {
         logs.fetchBackendLogs();
     } else if (tab === 'frontend' && logs.frontendLogs.length === 0) {
@@ -87,11 +96,13 @@ function onTabChange(tab: string) {
     }
 }
 
+/** Show the clear confirmation dialog for the given target. */
 function confirmClear(target: 'backend' | 'frontend') {
     clearTarget.value = target;
     showClearDialog.value = true;
 }
 
+/** Execute the clear action on the selected target. */
 function handleClear() {
     if (clearTarget.value === 'backend') {
         logs.clearBackendLogs();
@@ -101,8 +112,23 @@ function handleClear() {
     showClearDialog.value = false;
 }
 
+/** Check whether a log entry has rich metadata. */
 function hasMetadata(log: LogEntry): boolean {
     return !!(log.metadata && Object.keys(log.metadata).length > 0);
+}
+
+/** Test error logging from the UI. */
+function testError() {
+    try {
+        throw new Error('Test error from Logs page');
+    } catch (err) {
+        useErrorLogger().logError('error', (err as Error).message, {
+            source: 'LogsPage',
+            test: true,
+        });
+    }
+
+    logs.fetchFrontendLogs();
 }
 </script>
 
@@ -110,12 +136,14 @@ function hasMetadata(log: LogEntry): boolean {
     <div class="max-w-6xl mx-auto space-y-8">
         <div class="space-y-1">
             <h1 class="text-3xl font-bold text-slate-900">Logs</h1>
-            <p class="text-gray-500">
-                Consultation des logs applicatifs
-            </p>
+            <p class="text-gray-500">Consultation des logs applicatifs</p>
         </div>
 
-        <Tabs default-value="backend" class="w-full" @update:model-value="onTabChange">
+        <Tabs
+            default-value="backend"
+            class="w-full"
+            @update:model-value="onTabChange"
+        >
             <div class="flex items-center justify-between">
                 <TabsList>
                     <TabsTrigger value="backend">Backend</TabsTrigger>
@@ -129,19 +157,29 @@ function hasMetadata(log: LogEntry): boolean {
                         <CardContent class="pt-6">
                             <div class="flex flex-wrap items-center gap-3">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-sm text-gray-500 whitespace-nowrap">Niveau</label>
+                                    <label
+                                        class="text-sm text-gray-500 whitespace-nowrap"
+                                        >Niveau</label
+                                    >
                                     <select
                                         v-model="logs.backendFilters.level"
                                         @change="logs.fetchBackendLogs()"
                                         class="text-sm border border-gray-300 rounded-md px-2 py-1.5"
                                     >
-                                        <option v-for="l in levels" :key="l" :value="l">
+                                        <option
+                                            v-for="l in levels"
+                                            :key="l"
+                                            :value="l"
+                                        >
                                             {{ l }}
                                         </option>
                                     </select>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <label class="text-sm text-gray-500 whitespace-nowrap">Service</label>
+                                    <label
+                                        class="text-sm text-gray-500 whitespace-nowrap"
+                                        >Service</label
+                                    >
                                     <select
                                         v-model="logs.backendFilters.service"
                                         @change="logs.fetchBackendLogs()"
@@ -166,7 +204,9 @@ function hasMetadata(log: LogEntry): boolean {
                                     >
                                         <svg
                                             class="w-4 h-4"
-                                            :class="{ 'animate-spin': logs.loading }"
+                                            :class="{
+                                                'animate-spin': logs.loading,
+                                            }"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
@@ -210,19 +250,43 @@ function hasMetadata(log: LogEntry): boolean {
                         <CardHeader>
                             <CardTitle>Logs Backend</CardTitle>
                             <CardDescription v-if="logs.backendTotalCount > 0">
-                                {{ logs.backendTotalCount }} entrée{{ logs.backendTotalCount > 1 ? 's' : '' }}
+                                {{ logs.backendTotalCount }} entrée{{
+                                    logs.backendTotalCount > 1 ? 's' : ''
+                                }}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div v-if="logs.loading && logs.backendLogs.length === 0" class="text-center py-12 text-gray-400">
+                            <div
+                                v-if="
+                                    logs.loading &&
+                                    logs.backendLogs.length === 0
+                                "
+                                class="text-center py-12 text-gray-400"
+                            >
                                 Chargement...
                             </div>
-                            <div v-else-if="logs.error" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div
+                                v-else-if="logs.error"
+                                class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-4"
+                            >
                                 {{ logs.error }}
                             </div>
-                            <div v-else-if="logs.backendLogs.length === 0" class="text-center py-12 text-gray-400">
-                                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <div
+                                v-else-if="logs.backendLogs.length === 0"
+                                class="text-center py-12 text-gray-400"
+                            >
+                                <svg
+                                    class="w-16 h-16 mx-auto text-gray-300 mb-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="1.5"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
                                 </svg>
                                 <p>Aucun log disponible</p>
                             </div>
@@ -231,64 +295,159 @@ function hasMetadata(log: LogEntry): boolean {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead class="w-8"></TableHead>
-                                                <TableHead class="w-40 whitespace-nowrap">Date</TableHead>
-                                                <TableHead class="w-20">Niveau</TableHead>
-                                                <TableHead class="w-28">Service</TableHead>
-                                                <TableHead class="w-28">Contexte</TableHead>
+                                                <TableHead
+                                                    class="w-8"
+                                                ></TableHead>
+                                                <TableHead
+                                                    class="w-40 whitespace-nowrap"
+                                                    >Date</TableHead
+                                                >
+                                                <TableHead class="w-20"
+                                                    >Niveau</TableHead
+                                                >
+                                                <TableHead class="w-28"
+                                                    >Service</TableHead
+                                                >
+                                                <TableHead class="w-28"
+                                                    >Contexte</TableHead
+                                                >
                                                 <TableHead>Message</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            <template v-for="log in logs.backendLogs" :key="log._id">
+                                            <template
+                                                v-for="log in logs.backendLogs"
+                                                :key="log._id"
+                                            >
                                                 <TableRow
                                                     class="cursor-pointer"
-                                                    :class="{ 'bg-gray-50': expandedRows.has(log._id) }"
+                                                    :class="{
+                                                        'bg-gray-50':
+                                                            expandedRows.has(
+                                                                log._id,
+                                                            ),
+                                                    }"
                                                     @click="toggleRow(log._id)"
                                                 >
-                                                    <TableCell class="text-gray-400">
+                                                    <TableCell
+                                                        class="text-gray-400"
+                                                    >
                                                         <svg
                                                             class="w-4 h-4 transition-transform"
-                                                            :class="{ 'rotate-90': expandedRows.has(log._id) }"
+                                                            :class="{
+                                                                'rotate-90':
+                                                                    expandedRows.has(
+                                                                        log._id,
+                                                                    ),
+                                                            }"
                                                             fill="none"
                                                             stroke="currentColor"
                                                             viewBox="0 0 24 24"
                                                         >
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M9 5l7 7-7 7"
+                                                            />
                                                         </svg>
                                                     </TableCell>
-                                                    <TableCell class="text-xs text-gray-500 whitespace-nowrap">
-                                                        {{ formatTimestamp(log.timestamp) }}
+                                                    <TableCell
+                                                        class="text-xs text-gray-500 whitespace-nowrap"
+                                                    >
+                                                        {{
+                                                            formatTimestamp(
+                                                                log.timestamp,
+                                                            )
+                                                        }}
                                                     </TableCell>
                                                     <TableCell>
                                                         <span
                                                             class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold"
-                                                            :class="levelColor(log.level)"
+                                                            :class="
+                                                                levelColor(
+                                                                    log.level,
+                                                                )
+                                                            "
                                                         >
                                                             {{ log.level }}
                                                         </span>
                                                     </TableCell>
-                                                    <TableCell class="text-sm text-gray-700">
+                                                    <TableCell
+                                                        class="text-sm text-gray-700"
+                                                    >
                                                         {{ log.service || '-' }}
                                                     </TableCell>
-                                                    <TableCell class="text-sm text-gray-700 max-w-32 truncate">
+                                                    <TableCell
+                                                        class="text-sm text-gray-700 max-w-32 truncate"
+                                                    >
                                                         {{ log.context || '-' }}
                                                     </TableCell>
-                                                    <TableCell class="text-sm text-gray-700 max-w-md truncate" :title="log.message">
+                                                    <TableCell
+                                                        class="text-sm text-gray-700 max-w-md truncate"
+                                                        :title="log.message"
+                                                    >
                                                         {{ log.message }}
                                                     </TableCell>
                                                 </TableRow>
-                                                <TableRow v-if="expandedRows.has(log._id)" class="bg-gray-50">
+                                                <TableRow
+                                                    v-if="
+                                                        expandedRows.has(
+                                                            log._id,
+                                                        )
+                                                    "
+                                                    class="bg-gray-50"
+                                                >
                                                     <TableCell></TableCell>
-                                                    <TableCell colspan="5" class="p-4">
+                                                    <TableCell
+                                                        colspan="5"
+                                                        class="p-4"
+                                                    >
                                                         <div class="space-y-2">
-                                                            <div v-if="log.metadata?.trace" class="space-y-1">
-                                                                <p class="text-xs font-semibold text-gray-500 uppercase">Stack Trace</p>
-                                                                <pre class="text-xs text-red-600 bg-red-50 border border-red-200 rounded p-3 overflow-auto max-h-40">{{ log.metadata.trace }}</pre>
+                                                            <div
+                                                                v-if="
+                                                                    log.metadata
+                                                                        ?.trace
+                                                                "
+                                                                class="space-y-1"
+                                                            >
+                                                                <p
+                                                                    class="text-xs font-semibold text-gray-500 uppercase"
+                                                                >
+                                                                    Stack Trace
+                                                                </p>
+                                                                <pre
+                                                                    class="text-xs text-red-600 bg-red-50 border border-red-200 rounded p-3 overflow-auto max-h-40"
+                                                                    >{{
+                                                                        log
+                                                                            .metadata
+                                                                            .trace
+                                                                    }}</pre
+                                                                >
                                                             </div>
-                                                            <div v-if="hasMetadata(log)" class="space-y-1">
-                                                                <p class="text-xs font-semibold text-gray-500 uppercase">Metadata</p>
-                                                                <pre class="text-xs text-gray-600 bg-white border border-gray-200 rounded p-3 overflow-auto max-h-60">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
+                                                            <div
+                                                                v-if="
+                                                                    hasMetadata(
+                                                                        log,
+                                                                    )
+                                                                "
+                                                                class="space-y-1"
+                                                            >
+                                                                <p
+                                                                    class="text-xs font-semibold text-gray-500 uppercase"
+                                                                >
+                                                                    Metadata
+                                                                </p>
+                                                                <pre
+                                                                    class="text-xs text-gray-600 bg-white border border-gray-200 rounded p-3 overflow-auto max-h-60"
+                                                                    >{{
+                                                                        JSON.stringify(
+                                                                            log.metadata,
+                                                                            null,
+                                                                            2,
+                                                                        )
+                                                                    }}</pre
+                                                                >
                                                             </div>
                                                         </div>
                                                     </TableCell>
@@ -298,41 +457,94 @@ function hasMetadata(log: LogEntry): boolean {
                                     </Table>
                                 </ScrollArea>
 
-                                <div v-if="logs.backendTotalPages > 1" class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-                                    <div class="flex items-center gap-2 text-sm text-gray-500">
-                                        <span>Page {{ logs.backendFilters.page }} / {{ logs.backendTotalPages }}</span>
+                                <div
+                                    v-if="logs.backendTotalPages > 1"
+                                    class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200"
+                                >
+                                    <div
+                                        class="flex items-center gap-2 text-sm text-gray-500"
+                                    >
+                                        <span
+                                            >Page
+                                            {{ logs.backendFilters.page }} /
+                                            {{ logs.backendTotalPages }}</span
+                                        >
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            :disabled="logs.backendFilters.page <= 1"
-                                            @click="logs.backendFilters.page--; logs.fetchBackendLogs()"
+                                            :disabled="
+                                                logs.backendFilters.page <= 1
+                                            "
+                                            @click="
+                                                logs.backendFilters.page--;
+                                                logs.fetchBackendLogs();
+                                            "
                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                            <svg
+                                                class="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M15 19l-7-7 7-7"
+                                                />
                                             </svg>
                                         </Button>
-                                        <span class="text-sm text-gray-600 min-w-16 text-center">
-                                            Page {{ logs.backendFilters.page }} / {{ logs.backendTotalPages }}
+                                        <span
+                                            class="text-sm text-gray-600 min-w-16 text-center"
+                                        >
+                                            Page
+                                            {{ logs.backendFilters.page }} /
+                                            {{ logs.backendTotalPages }}
                                         </span>
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            :disabled="logs.backendFilters.page >= logs.backendTotalPages"
-                                            @click="logs.backendFilters.page++; logs.fetchBackendLogs()"
+                                            :disabled="
+                                                logs.backendFilters.page >=
+                                                logs.backendTotalPages
+                                            "
+                                            @click="
+                                                logs.backendFilters.page++;
+                                                logs.fetchBackendLogs();
+                                            "
                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            <svg
+                                                class="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M9 5l7 7-7 7"
+                                                />
                                             </svg>
                                         </Button>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <label class="text-sm text-gray-500" for="backend-page-size">Par page</label>
+                                        <label
+                                            class="text-sm text-gray-500"
+                                            for="backend-page-size"
+                                            >Par page</label
+                                        >
                                         <select
                                             id="backend-page-size"
-                                            v-model="logs.backendFilters.pageSize"
-                                            @change="logs.backendFilters.page = 1; logs.fetchBackendLogs()"
+                                            v-model="
+                                                logs.backendFilters.pageSize
+                                            "
+                                            @change="
+                                                logs.backendFilters.page = 1;
+                                                logs.fetchBackendLogs();
+                                            "
                                             class="text-sm border border-gray-300 rounded-md px-2 py-1"
                                         >
                                             <option :value="20">20</option>
@@ -353,13 +565,20 @@ function hasMetadata(log: LogEntry): boolean {
                         <CardContent class="pt-6">
                             <div class="flex flex-wrap items-center gap-3">
                                 <div class="flex items-center gap-2">
-                                    <label class="text-sm text-gray-500 whitespace-nowrap">Niveau</label>
+                                    <label
+                                        class="text-sm text-gray-500 whitespace-nowrap"
+                                        >Niveau</label
+                                    >
                                     <select
                                         v-model="logs.frontendFilters.level"
                                         @change="logs.fetchFrontendLogs()"
                                         class="text-sm border border-gray-300 rounded-md px-2 py-1.5"
                                     >
-                                        <option v-for="l in levels" :key="l" :value="l">
+                                        <option
+                                            v-for="l in levels"
+                                            :key="l"
+                                            :value="l"
+                                        >
                                             {{ l }}
                                         </option>
                                     </select>
@@ -373,14 +592,30 @@ function hasMetadata(log: LogEntry): boolean {
                                     >
                                         <svg
                                             class="w-4 h-4"
-                                            :class="{ 'animate-spin': logs.loading }"
+                                            :class="{
+                                                'animate-spin': logs.loading,
+                                            }"
                                             fill="none"
                                             stroke="currentColor"
                                             viewBox="0 0 24 24"
                                         >
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                                            />
                                         </svg>
                                         Actualiser
+                                    </Button>
+
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        @click="testError()"
+                                    >
+                                        <TestTube2Icon class="w-4 h-4" />
+                                        Tester
                                     </Button>
                                     <Button
                                         variant="outline"
@@ -388,8 +623,18 @@ function hasMetadata(log: LogEntry): boolean {
                                         class="text-red-600 border-red-200 hover:bg-red-50"
                                         @click="confirmClear('frontend')"
                                     >
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        <svg
+                                            class="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                            />
                                         </svg>
                                         Vider
                                     </Button>
@@ -402,19 +647,43 @@ function hasMetadata(log: LogEntry): boolean {
                         <CardHeader>
                             <CardTitle>Logs Frontend</CardTitle>
                             <CardDescription v-if="logs.frontendTotalCount > 0">
-                                {{ logs.frontendTotalCount }} entrée{{ logs.frontendTotalCount > 1 ? 's' : '' }}
+                                {{ logs.frontendTotalCount }} entrée{{
+                                    logs.frontendTotalCount > 1 ? 's' : ''
+                                }}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <div v-if="logs.loading && logs.frontendLogs.length === 0" class="text-center py-12 text-gray-400">
+                            <div
+                                v-if="
+                                    logs.loading &&
+                                    logs.frontendLogs.length === 0
+                                "
+                                class="text-center py-12 text-gray-400"
+                            >
                                 Chargement...
                             </div>
-                            <div v-else-if="logs.error" class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div
+                                v-else-if="logs.error"
+                                class="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg p-4"
+                            >
                                 {{ logs.error }}
                             </div>
-                            <div v-else-if="logs.frontendLogs.length === 0" class="text-center py-12 text-gray-400">
-                                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <div
+                                v-else-if="logs.frontendLogs.length === 0"
+                                class="text-center py-12 text-gray-400"
+                            >
+                                <svg
+                                    class="w-16 h-16 mx-auto text-gray-300 mb-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="1.5"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    />
                                 </svg>
                                 <p>Aucun log disponible</p>
                             </div>
@@ -423,51 +692,119 @@ function hasMetadata(log: LogEntry): boolean {
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead class="w-8"></TableHead>
-                                                <TableHead class="w-40 whitespace-nowrap">Date</TableHead>
-                                                <TableHead class="w-20">Niveau</TableHead>
+                                                <TableHead
+                                                    class="w-8"
+                                                ></TableHead>
+                                                <TableHead
+                                                    class="w-40 whitespace-nowrap"
+                                                    >Date</TableHead
+                                                >
+                                                <TableHead class="w-20"
+                                                    >Niveau</TableHead
+                                                >
                                                 <TableHead>Message</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            <template v-for="log in logs.frontendLogs" :key="log._id">
+                                            <template
+                                                v-for="log in logs.frontendLogs"
+                                                :key="log._id"
+                                            >
                                                 <TableRow
                                                     class="cursor-pointer"
-                                                    :class="{ 'bg-gray-50': expandedRows.has(log._id) }"
+                                                    :class="{
+                                                        'bg-gray-50':
+                                                            expandedRows.has(
+                                                                log._id,
+                                                            ),
+                                                    }"
                                                     @click="toggleRow(log._id)"
                                                 >
-                                                    <TableCell class="text-gray-400">
+                                                    <TableCell
+                                                        class="text-gray-400"
+                                                    >
                                                         <svg
                                                             class="w-4 h-4 transition-transform"
-                                                            :class="{ 'rotate-90': expandedRows.has(log._id) }"
+                                                            :class="{
+                                                                'rotate-90':
+                                                                    expandedRows.has(
+                                                                        log._id,
+                                                                    ),
+                                                            }"
                                                             fill="none"
                                                             stroke="currentColor"
                                                             viewBox="0 0 24 24"
                                                         >
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                                            <path
+                                                                stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                stroke-width="2"
+                                                                d="M9 5l7 7-7 7"
+                                                            />
                                                         </svg>
                                                     </TableCell>
-                                                    <TableCell class="text-xs text-gray-500 whitespace-nowrap">
-                                                        {{ formatTimestamp(log.timestamp) }}
+                                                    <TableCell
+                                                        class="text-xs text-gray-500 whitespace-nowrap"
+                                                    >
+                                                        {{
+                                                            formatTimestamp(
+                                                                log.timestamp,
+                                                            )
+                                                        }}
                                                     </TableCell>
                                                     <TableCell>
                                                         <span
                                                             class="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold"
-                                                            :class="levelColor(log.level)"
+                                                            :class="
+                                                                levelColor(
+                                                                    log.level,
+                                                                )
+                                                            "
                                                         >
                                                             {{ log.level }}
                                                         </span>
                                                     </TableCell>
-                                                    <TableCell class="text-sm text-gray-700 max-w-md truncate" :title="log.message">
+                                                    <TableCell
+                                                        class="text-sm text-gray-700 max-w-md truncate"
+                                                        :title="log.message"
+                                                    >
                                                         {{ log.message }}
                                                     </TableCell>
                                                 </TableRow>
-                                                <TableRow v-if="expandedRows.has(log._id)" class="bg-gray-50">
+                                                <TableRow
+                                                    v-if="
+                                                        expandedRows.has(
+                                                            log._id,
+                                                        )
+                                                    "
+                                                    class="bg-gray-50"
+                                                >
                                                     <TableCell></TableCell>
-                                                    <TableCell colspan="3" class="p-4">
-                                                        <div v-if="hasMetadata(log)" class="space-y-1">
-                                                            <p class="text-xs font-semibold text-gray-500 uppercase">Metadata</p>
-                                                            <pre class="text-xs text-gray-600 bg-white border border-gray-200 rounded p-3 overflow-auto max-h-60">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
+                                                    <TableCell
+                                                        colspan="3"
+                                                        class="p-4"
+                                                    >
+                                                        <div
+                                                            v-if="
+                                                                hasMetadata(log)
+                                                            "
+                                                            class="space-y-1"
+                                                        >
+                                                            <p
+                                                                class="text-xs font-semibold text-gray-500 uppercase"
+                                                            >
+                                                                Metadata
+                                                            </p>
+                                                            <pre
+                                                                class="text-xs text-gray-600 bg-white border border-gray-200 rounded p-3 overflow-auto max-h-60"
+                                                                >{{
+                                                                    JSON.stringify(
+                                                                        log.metadata,
+                                                                        null,
+                                                                        2,
+                                                                    )
+                                                                }}</pre
+                                                            >
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -476,41 +813,94 @@ function hasMetadata(log: LogEntry): boolean {
                                     </Table>
                                 </ScrollArea>
 
-                                <div v-if="logs.frontendTotalPages > 1" class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
-                                    <div class="flex items-center gap-2 text-sm text-gray-500">
-                                        <span>Page {{ logs.frontendFilters.page }} / {{ logs.frontendTotalPages }}</span>
+                                <div
+                                    v-if="logs.frontendTotalPages > 1"
+                                    class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200"
+                                >
+                                    <div
+                                        class="flex items-center gap-2 text-sm text-gray-500"
+                                    >
+                                        <span
+                                            >Page
+                                            {{ logs.frontendFilters.page }} /
+                                            {{ logs.frontendTotalPages }}</span
+                                        >
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            :disabled="logs.frontendFilters.page <= 1"
-                                            @click="logs.frontendFilters.page--; logs.fetchFrontendLogs()"
+                                            :disabled="
+                                                logs.frontendFilters.page <= 1
+                                            "
+                                            @click="
+                                                logs.frontendFilters.page--;
+                                                logs.fetchFrontendLogs();
+                                            "
                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                            <svg
+                                                class="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M15 19l-7-7 7-7"
+                                                />
                                             </svg>
                                         </Button>
-                                        <span class="text-sm text-gray-600 min-w-16 text-center">
-                                            Page {{ logs.frontendFilters.page }} / {{ logs.frontendTotalPages }}
+                                        <span
+                                            class="text-sm text-gray-600 min-w-16 text-center"
+                                        >
+                                            Page
+                                            {{ logs.frontendFilters.page }} /
+                                            {{ logs.frontendTotalPages }}
                                         </span>
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            :disabled="logs.frontendFilters.page >= logs.frontendTotalPages"
-                                            @click="logs.frontendFilters.page++; logs.fetchFrontendLogs()"
+                                            :disabled="
+                                                logs.frontendFilters.page >=
+                                                logs.frontendTotalPages
+                                            "
+                                            @click="
+                                                logs.frontendFilters.page++;
+                                                logs.fetchFrontendLogs();
+                                            "
                                         >
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                            <svg
+                                                class="w-4 h-4"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M9 5l7 7-7 7"
+                                                />
                                             </svg>
                                         </Button>
                                     </div>
                                     <div class="flex items-center gap-2">
-                                        <label class="text-sm text-gray-500" for="frontend-page-size">Par page</label>
+                                        <label
+                                            class="text-sm text-gray-500"
+                                            for="frontend-page-size"
+                                            >Par page</label
+                                        >
                                         <select
                                             id="frontend-page-size"
-                                            v-model="logs.frontendFilters.pageSize"
-                                            @change="logs.frontendFilters.page = 1; logs.fetchFrontendLogs()"
+                                            v-model="
+                                                logs.frontendFilters.pageSize
+                                            "
+                                            @change="
+                                                logs.frontendFilters.page = 1;
+                                                logs.fetchFrontendLogs();
+                                            "
                                             class="text-sm border border-gray-300 rounded-md px-2 py-1"
                                         >
                                             <option :value="20">20</option>
@@ -526,18 +916,29 @@ function hasMetadata(log: LogEntry): boolean {
             </TabsContent>
         </Tabs>
 
-        <Dialog :open="showClearDialog" @update:open="showClearDialog = $event" modal>
+        <Dialog
+            :open="showClearDialog"
+            @update:open="showClearDialog = $event"
+            modal
+        >
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Vider les logs</DialogTitle>
                     <DialogDescription>
-                        Êtes-vous sûr de vouloir supprimer tous les logs {{ clearTarget === 'backend' ? 'backend' : 'frontend' }} ?
-                        Cette action est irréversible.
+                        Êtes-vous sûr de vouloir supprimer tous les logs
+                        {{
+                            clearTarget === 'backend' ? 'backend' : 'frontend'
+                        }}
+                        ? Cette action est irréversible.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter>
-                    <Button variant="outline" @click="showClearDialog = false">Annuler</Button>
-                    <Button variant="destructive" @click="handleClear">Vider</Button>
+                    <Button variant="outline" @click="showClearDialog = false"
+                        >Annuler</Button
+                    >
+                    <Button variant="destructive" @click="handleClear"
+                        >Vider</Button
+                    >
                 </DialogFooter>
             </DialogContent>
         </Dialog>

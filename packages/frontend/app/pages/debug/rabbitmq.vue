@@ -34,10 +34,12 @@ const {
 
 onMounted(() => rabbitmq.fetchQueues());
 
+/** Select a queue and fetch its messages. */
 function selectQueue(name: string) {
     rabbitmq.fetchMessages(name);
 }
 
+/** Pretty-print raw JSON content, falling back to raw string. */
 function formatContent(raw: string): string {
     try {
         return JSON.stringify(JSON.parse(raw), null, 2);

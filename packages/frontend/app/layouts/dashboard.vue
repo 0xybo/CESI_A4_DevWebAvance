@@ -6,10 +6,18 @@
             :class="collapsed ? 'w-16' : 'w-64'"
         >
             <!-- Logo + toggle -->
-            <div class="flex items-center justify-between px-4 py-5 border-b border-white/10">
+            <div
+                class="flex items-center justify-between px-4 py-5 border-b border-white/10"
+            >
                 <div v-if="!collapsed" class="overflow-hidden">
-                    <p class="text-xl font-bold text-white leading-none whitespace-nowrap">Transvirex</p>
-                    <p class="text-xs text-blue-300 mt-0.5 whitespace-nowrap">Moving Intelligence</p>
+                    <p
+                        class="text-xl font-bold text-white leading-none whitespace-nowrap"
+                    >
+                        Transvirex
+                    </p>
+                    <p class="text-xs text-blue-300 mt-0.5 whitespace-nowrap">
+                        Moving Intelligence
+                    </p>
                 </div>
                 <button
                     @click="collapsed = !collapsed"
@@ -48,9 +56,15 @@
                         <component
                             :is="item.icon"
                             class="w-5 h-5 flex-shrink-0"
-                            :class="isActive(item.href) ? 'text-white' : 'text-blue-300 group-hover/item:text-white'"
+                            :class="
+                                isActive(item.href)
+                                    ? 'text-white'
+                                    : 'text-blue-300 group-hover/item:text-white'
+                            "
                         />
-                        <span v-if="!collapsed" class="truncate">{{ item.label }}</span>
+                        <span v-if="!collapsed" class="truncate">{{
+                            item.label
+                        }}</span>
                     </NuxtLink>
                 </template>
             </nav>
@@ -68,7 +82,9 @@
                         {{ userInitial }}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-white truncate">{{ userName }}</p>
+                        <p class="text-sm font-semibold text-white truncate">
+                            {{ userName }}
+                        </p>
                         <span
                             class="inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full mt-0.5"
                             :class="roleBadgeClass"
@@ -92,23 +108,35 @@
         <!-- ───── Zone principale ───── -->
         <div class="flex-1 flex flex-col overflow-hidden">
             <!-- Header / Topbar -->
-            <header class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-10">
+            <header
+                class="h-14 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-shrink-0 z-10"
+            >
                 <!-- Breadcrumb -->
                 <div class="flex items-center gap-2 text-sm">
                     <span class="text-gray-400 font-medium">Transvirex</span>
                     <ChevronRight class="w-3.5 h-3.5 text-gray-300" />
-                    <span class="text-gray-400 capitalize">{{ roleLabel }}</span>
+                    <span class="text-gray-400 capitalize">{{
+                        roleLabel
+                    }}</span>
                     <ChevronRight class="w-3.5 h-3.5 text-gray-300" />
-                    <span class="font-semibold text-gray-800">{{ pageTitle }}</span>
+                    <span class="font-semibold text-gray-800">{{
+                        pageTitle
+                    }}</span>
                 </div>
 
                 <!-- Actions droite -->
                 <div class="flex items-center gap-2">
-                    <button class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                    <button
+                        class="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
                         <Bell class="w-5 h-5" />
-                        <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
+                        <span
+                            class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"
+                        />
                     </button>
-                    <div class="flex items-center gap-2 pl-3 border-l border-gray-200 ml-1">
+                    <div
+                        class="flex items-center gap-2 pl-3 border-l border-gray-200 ml-1"
+                    >
                         <div
                             class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                             :class="roleColor"
@@ -116,8 +144,14 @@
                             {{ userInitial }}
                         </div>
                         <div class="hidden sm:block">
-                            <p class="text-sm font-medium text-gray-800 leading-none">{{ userName }}</p>
-                            <p class="text-xs text-gray-400 mt-0.5 capitalize">{{ roleLabel }}</p>
+                            <p
+                                class="text-sm font-medium text-gray-800 leading-none"
+                            >
+                                {{ userName }}
+                            </p>
+                            <p class="text-xs text-gray-400 mt-0.5 capitalize">
+                                {{ roleLabel }}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -133,22 +167,42 @@
 
 <script setup lang="ts">
 import {
-    LayoutDashboard, Truck, Package, CreditCard, Users,
-    Settings, LogOut, Bell, Building2, Car, UserCog,
-    FileText, BarChart3, ChevronRight, ChevronLeft, Menu, ShoppingBag,
+    LayoutDashboard,
+    Truck,
+    Package,
+    CreditCard,
+    Users,
+    Settings,
+    LogOut,
+    Bell,
+    Building2,
+    Car,
+    UserCog,
+    FileText,
+    BarChart3,
+    ChevronRight,
+    ChevronLeft,
+    Menu,
+    ShoppingBag,
 } from 'lucide-vue-next';
 import { useCookie, navigateTo, useRoute } from '#app';
 import { $fetch } from 'ofetch';
 
+/** Possible user roles for navigation and display. */
 type Role = 'admin' | 'dispatcher' | 'driver' | 'business_manager';
 
 const route = useRoute();
+/** Whether the sidebar is collapsed. */
 const collapsed = ref(false);
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const accessToken = useCookie('access_token');
 const refreshToken = useCookie('refresh_token');
 
+/**
+ * Parse a JWT token and return its payload as a plain object.
+ * Returns null if parsing fails.
+ */
 function parseJwt(token: string): Record<string, unknown> | null {
     try {
         const b64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
@@ -158,14 +212,17 @@ function parseJwt(token: string): Record<string, unknown> | null {
     }
 }
 
+/** Decoded JWT payload from the access token cookie. */
 const jwtPayload = computed(() =>
     accessToken.value ? parseJwt(accessToken.value) : null,
 );
 
+/** Current user role extracted from JWT, defaults to 'dispatcher'. */
 const userRole = computed<Role>(
     () => (jwtPayload.value?.role as Role) ?? 'dispatcher',
 );
 
+/** Computed full user name from JWT firstname and lastname. */
 const userName = computed(() => {
     const p = jwtPayload.value;
     if (!p) return 'Utilisateur';
@@ -173,105 +230,253 @@ const userName = computed(() => {
     const last = (p.lastname as string) ?? '';
     return `${first} ${last}`.trim() || (p.email as string) || 'Utilisateur';
 });
+/** First character of the user name for avatar display. */
 const userInitial = computed(() => userName.value.charAt(0).toUpperCase());
 
 // ── Rôle display ──────────────────────────────────────────────────────────────
+/** Human-readable labels for each role. */
 const roleLabels: Record<Role, string> = {
     admin: 'Administrateur',
     dispatcher: 'Dispatcher',
     driver: 'Chauffeur',
     business_manager: 'Business Manager',
 };
+/** Localized label for the current user role. */
 const roleLabel = computed(() => roleLabels[userRole.value] ?? userRole.value);
 
-const roleBadgeClass = computed(() => ({
-    admin: 'bg-red-500/20 text-red-300',
-    dispatcher: 'bg-blue-400/20 text-blue-200',
-    driver: 'bg-green-500/20 text-green-300',
-    business_manager: 'bg-purple-500/20 text-purple-300',
-}[userRole.value] ?? 'bg-gray-500/20 text-gray-300'));
+/** Tailwind classes for the role badge in the sidebar. */
+const roleBadgeClass = computed(
+    () =>
+        ({
+            admin: 'bg-red-500/20 text-red-300',
+            dispatcher: 'bg-blue-400/20 text-blue-200',
+            driver: 'bg-green-500/20 text-green-300',
+            business_manager: 'bg-purple-500/20 text-purple-300',
+        })[userRole.value] ?? 'bg-gray-500/20 text-gray-300',
+);
 
-const roleColor = computed(() => ({
-    admin: 'bg-red-600 text-white',
-    dispatcher: 'bg-blue-600 text-white',
-    driver: 'bg-green-600 text-white',
-    business_manager: 'bg-purple-600 text-white',
-}[userRole.value] ?? 'bg-gray-600 text-white'));
+/** Tailwind classes for the role avatar background. */
+const roleColor = computed(
+    () =>
+        ({
+            admin: 'bg-red-600 text-white',
+            dispatcher: 'bg-blue-600 text-white',
+            driver: 'bg-green-600 text-white',
+            business_manager: 'bg-purple-600 text-white',
+        })[userRole.value] ?? 'bg-gray-600 text-white',
+);
 
 // ── Navigation par rôle ───────────────────────────────────────────────────────
+/** Navigation groups and items visible for the current user role. */
 const visibleGroups = computed(() => {
     const role = userRole.value;
-    const base = { admin: '/admin', business_manager: '/admin', dispatcher: '/dispatcher', driver: '/livreur' }[role] ?? '/admin';
+    const base =
+        {
+            admin: '/admin',
+            business_manager: '/admin',
+            dispatcher: '/dispatcher',
+            driver: '/livreur',
+        }[role] ?? '/admin';
 
-    const groups: Record<Role, { label: string; items: { label: string; href: string; icon: unknown }[] }[]> = {
+    const groups: Record<
+        Role,
+        {
+            label: string;
+            items: { label: string; href: string; icon: unknown }[];
+        }[]
+    > = {
         admin: [
-            { label: 'Vue générale', items: [
-                { label: 'Dashboard', href: `${base}/dashboard`, icon: LayoutDashboard },
-            ]},
-            { label: 'Opérations', items: [
-                { label: 'Livraisons', href: `${base}/livraisons`, icon: Truck },
-                { label: 'Colis', href: `${base}/colis`, icon: Package },
-            ]},
-            { label: 'Commerce', items: [
-                { label: 'Clients', href: `${base}/clients`, icon: ShoppingBag },
-                { label: 'Factures', href: `${base}/factures`, icon: FileText },
-            ]},
-            { label: 'Flotte', items: [
-                { label: 'Chauffeurs', href: `${base}/chauffeurs`, icon: UserCog },
-                { label: 'Véhicules', href: `${base}/vehicules`, icon: Car },
-            ]},
-            { label: 'Administration', items: [
-                { label: 'Utilisateurs', href: `${base}/utilisateurs`, icon: Users },
-                { label: 'Hubs', href: `${base}/hubs`, icon: Building2 },
-                { label: 'Rapports', href: `${base}/rapports`, icon: BarChart3 },
-                { label: 'Paramètres', href: `${base}/parametres`, icon: Settings },
-            ]},
+            {
+                label: 'Vue générale',
+                items: [
+                    {
+                        label: 'Dashboard',
+                        href: `${base}/dashboard`,
+                        icon: LayoutDashboard,
+                    },
+                ],
+            },
+            {
+                label: 'Opérations',
+                items: [
+                    {
+                        label: 'Livraisons',
+                        href: `${base}/livraisons`,
+                        icon: Truck,
+                    },
+                    { label: 'Colis', href: `${base}/colis`, icon: Package },
+                ],
+            },
+            {
+                label: 'Commerce',
+                items: [
+                    {
+                        label: 'Clients',
+                        href: `${base}/clients`,
+                        icon: ShoppingBag,
+                    },
+                    {
+                        label: 'Factures',
+                        href: `${base}/factures`,
+                        icon: FileText,
+                    },
+                ],
+            },
+            {
+                label: 'Flotte',
+                items: [
+                    {
+                        label: 'Chauffeurs',
+                        href: `${base}/chauffeurs`,
+                        icon: UserCog,
+                    },
+                    {
+                        label: 'Véhicules',
+                        href: `${base}/vehicules`,
+                        icon: Car,
+                    },
+                ],
+            },
+            {
+                label: 'Administration',
+                items: [
+                    {
+                        label: 'Utilisateurs',
+                        href: `${base}/utilisateurs`,
+                        icon: Users,
+                    },
+                    { label: 'Hubs', href: `${base}/hubs`, icon: Building2 },
+                    {
+                        label: 'Rapports',
+                        href: `${base}/rapports`,
+                        icon: BarChart3,
+                    },
+                    {
+                        label: 'Paramètres',
+                        href: `${base}/parametres`,
+                        icon: Settings,
+                    },
+                ],
+            },
         ],
         business_manager: [
-            { label: 'Vue générale', items: [
-                { label: 'Dashboard', href: `${base}/dashboard`, icon: LayoutDashboard },
-            ]},
-            { label: 'Commerce', items: [
-                { label: 'Clients', href: `${base}/clients`, icon: ShoppingBag },
-                { label: 'Factures', href: `${base}/factures`, icon: FileText },
-            ]},
+            {
+                label: 'Vue générale',
+                items: [
+                    {
+                        label: 'Dashboard',
+                        href: `${base}/dashboard`,
+                        icon: LayoutDashboard,
+                    },
+                ],
+            },
+            {
+                label: 'Commerce',
+                items: [
+                    {
+                        label: 'Clients',
+                        href: `${base}/clients`,
+                        icon: ShoppingBag,
+                    },
+                    {
+                        label: 'Factures',
+                        href: `${base}/factures`,
+                        icon: FileText,
+                    },
+                ],
+            },
         ],
         dispatcher: [
-            { label: 'Vue générale', items: [
-                { label: 'Dashboard', href: `${base}/dashboard`, icon: LayoutDashboard },
-            ]},
-            { label: 'Opérations', items: [
-                { label: 'Livraisons', href: `${base}/livraisons`, icon: Truck },
-                { label: 'Colis', href: `${base}/colis`, icon: Package },
-            ]},
-            { label: 'Commerce', items: [
-                { label: 'Clients', href: `${base}/clients`, icon: ShoppingBag },
-                { label: 'Factures', href: `${base}/factures`, icon: FileText },
-            ]},
-            { label: 'Flotte', items: [
-                { label: 'Chauffeurs', href: `${base}/chauffeurs`, icon: UserCog },
-            ]},
+            {
+                label: 'Vue générale',
+                items: [
+                    {
+                        label: 'Dashboard',
+                        href: `${base}/dashboard`,
+                        icon: LayoutDashboard,
+                    },
+                ],
+            },
+            {
+                label: 'Opérations',
+                items: [
+                    {
+                        label: 'Livraisons',
+                        href: `${base}/livraisons`,
+                        icon: Truck,
+                    },
+                    { label: 'Colis', href: `${base}/colis`, icon: Package },
+                ],
+            },
+            {
+                label: 'Commerce',
+                items: [
+                    {
+                        label: 'Clients',
+                        href: `${base}/clients`,
+                        icon: ShoppingBag,
+                    },
+                    {
+                        label: 'Factures',
+                        href: `${base}/factures`,
+                        icon: FileText,
+                    },
+                ],
+            },
+            {
+                label: 'Flotte',
+                items: [
+                    {
+                        label: 'Chauffeurs',
+                        href: `${base}/chauffeurs`,
+                        icon: UserCog,
+                    },
+                ],
+            },
         ],
         driver: [
-            { label: 'Ma journée', items: [
-                { label: 'Dashboard', href: `${base}/dashboard`, icon: LayoutDashboard },
-                { label: 'Mes livraisons', href: `${base}/livraisons`, icon: Truck },
-            ]},
-            { label: 'Mon profil', items: [
-                { label: 'Profil & Véhicule', href: `${base}/profil`, icon: UserCog },
-            ]},
+            {
+                label: 'Ma journée',
+                items: [
+                    {
+                        label: 'Dashboard',
+                        href: `${base}/dashboard`,
+                        icon: LayoutDashboard,
+                    },
+                    {
+                        label: 'Mes livraisons',
+                        href: `${base}/livraisons`,
+                        icon: Truck,
+                    },
+                ],
+            },
+            {
+                label: 'Mon profil',
+                items: [
+                    {
+                        label: 'Profil & Véhicule',
+                        href: `${base}/profil`,
+                        icon: UserCog,
+                    },
+                ],
+            },
         ],
     };
 
     return groups[role] ?? groups.dispatcher;
 });
 
+/**
+ * Check if a navigation item is currently active.
+ * Dashboard links match exactly; other links match by prefix.
+ */
 function isActive(href: string) {
     const isDashboard = href.endsWith('/dashboard');
     if (isDashboard) return route.path === href;
     return route.path.startsWith(href);
 }
 
+/** Computed title of the current page based on active navigation item. */
 const pageTitle = computed(() => {
     for (const group of visibleGroups.value) {
         const match = group.items.find((i) => isActive(i.href));
@@ -285,6 +490,10 @@ onMounted(() => {
     if (!accessToken.value) navigateTo('/');
 });
 
+/**
+ * Log out the user by calling the API and clearing cookies.
+ * Always redirects to the home page, even if the API call fails.
+ */
 async function logout() {
     try {
         if (refreshToken.value) {
