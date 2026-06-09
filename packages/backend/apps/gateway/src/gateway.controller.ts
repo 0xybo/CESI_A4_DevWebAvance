@@ -19,7 +19,6 @@ export class GatewayController {
         return this.gatewayService.getHello();
     }
 
-    /** Health check for the gateway itself. */
     @ApiTags('Gateway')
     @Public()
     @Get('gateway/health')
