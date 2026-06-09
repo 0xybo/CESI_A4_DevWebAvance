@@ -2,6 +2,8 @@
     <div class="min-h-screen flex flex-col md:flex-row">
         <!-- Branding panel -->
         <div class="relative flex flex-col justify-between bg-[#1a3f7a] text-white md:w-[42%] md:min-h-screen px-8 py-8 md:px-12 md:py-12">
+        <!-- Branding panel -->
+        <div class="relative flex flex-col justify-between bg-[#1a3f7a] text-white md:w-[42%] md:min-h-screen px-8 py-8 md:px-12 md:py-12">
             <div>
                 <p class="text-xl font-bold leading-none">Transvirex</p>
                 <p class="text-sm text-blue-200 mt-0.5">Moving Intelligence</p>
@@ -78,11 +80,14 @@
 </template>
 
 <script setup lang="ts">
+
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { useCookie, navigateTo } from '#app';
+import { $fetch } from 'ofetch';
 
 definePageMeta({ layout: false });
 
