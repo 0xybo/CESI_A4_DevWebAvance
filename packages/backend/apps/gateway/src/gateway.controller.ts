@@ -10,7 +10,9 @@ import {
     Query,
     Req,
     Res,
+    UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { Public } from './decorators/public.decorator';
 import { LoginDto } from './dto/login.dto';
@@ -85,6 +87,8 @@ export class GatewayController {
     }
 
     @Public()
+    @UseGuards(ThrottlerGuard)
+    @Throttle({ default: { limit: 5, ttl: 60000 } })
     @Post('auth/login')
     async login(
         @Body() body: LoginDto,
