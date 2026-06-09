@@ -11,6 +11,7 @@ import {
 import type { Request, Response } from 'express';
 import { GatewayService } from './gateway.service';
 import { Public } from './decorators/public.decorator';
+import { LoginDto } from './dto/login.dto';
 
 const ACCESS_TOKEN_TTL = 15 * 60 * 1000;
 const REFRESH_TOKEN_TTL = 7 * 24 * 60 * 60 * 1000;
@@ -99,7 +100,7 @@ export class GatewayController {
     @Public()
     @Post('auth/login')
     async login(
-        @Body() body: { email: string; password: string },
+        @Body() body: LoginDto,
         @Res({ passthrough: true }) res: Response,
     ) {
         const data = await this.gatewayService.login(body);
