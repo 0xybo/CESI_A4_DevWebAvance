@@ -16,7 +16,23 @@ export const useAuth = () => {
             });
             user.value = data;
             return true;
-        } catch {
+        } catch (err: any) {
+            if (err?.status === 401 || err?.statusCode === 401) {
+                try {
+                    await $fetch('/api/auth/refresh', {
+                        method: 'POST',
+                        credentials: 'include',
+                    });
+                    const data = await $fetch<AuthUser>('/api/auth/me', {
+                        credentials: 'include',
+                    });
+                    user.value = data;
+                    return true;
+                } catch {
+                    user.value = null;
+                    return false;
+                }
+            }
             user.value = null;
             return false;
         }
