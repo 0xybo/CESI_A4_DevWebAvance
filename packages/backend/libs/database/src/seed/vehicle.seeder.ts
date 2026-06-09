@@ -3,11 +3,7 @@ import type { PrismaClient } from '@generated/prisma';
 import { nextVehicleRef } from './helpers';
 
 /** Seed a given number of random vehicles. */
-export async function seedVehicles(
-    prisma: PrismaClient,
-    count: number,
-    hubIds: string[],
-) {
+export async function seedVehicles(prisma: PrismaClient, count: number, hubIds: string[]) {
     const vehicles: { id: string; hub_id: string | null }[] = [];
     const types = ['van', 'truck', 'refrigerated', 'flatbed', 'box'];
 

@@ -7,9 +7,7 @@ import { RefreshDto } from './dto/refresh.dto';
 /** HTTP and RabbitMQ controller for authentication operations. */
 @Controller()
 export class AuthenticationController {
-    constructor(
-        private readonly authenticationService: AuthenticationService,
-    ) {}
+    constructor(private readonly authenticationService: AuthenticationService) {}
 
     /** HTTP health-check endpoint. */
     @Get('health')

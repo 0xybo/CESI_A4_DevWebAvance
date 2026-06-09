@@ -3,11 +3,7 @@ import type { PrismaClient } from '@generated/prisma';
 import { nextParcelRef } from './helpers';
 
 /** Seed a given number of parcels per invoice. */
-export async function seedParcels(
-    prisma: PrismaClient,
-    parcelsPerInvoice: number,
-    invoices: { id: string }[],
-) {
+export async function seedParcels(prisma: PrismaClient, parcelsPerInvoice: number, invoices: { id: string }[]) {
     for (const invoice of invoices) {
         for (let i = 0; i < parcelsPerInvoice; i++) {
             await prisma.parcel.create({

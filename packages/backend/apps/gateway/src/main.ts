@@ -1,11 +1,7 @@
 import { LoggingInterceptor, LoggingService } from '@app/logging';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import {
-    DocumentBuilder,
-    SwaggerDocumentOptions,
-    SwaggerModule,
-} from '@nestjs/swagger';
+import { DocumentBuilder, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { GatewayModule } from './gateway.module';
 
@@ -19,9 +15,7 @@ async function bootstrap() {
     app.useGlobalInterceptors(app.get(LoggingInterceptor));
 
     app.use(cookieParser());
-    app.useGlobalPipes(
-        new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
-    );
+    app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }));
     app.setGlobalPrefix('api');
 
     const swaggerConfig = new DocumentBuilder()
@@ -36,16 +30,14 @@ async function bootstrap() {
                 type: 'http',
                 scheme: 'bearer',
                 bearerFormat: 'JWT',
-                description:
-                    'JWT access token (set via cookie "access_token" on login)',
+                description: 'JWT access token (set via cookie "access_token" on login)',
             },
             'JWT-auth',
         )
         .build();
 
     const options: SwaggerDocumentOptions = {
-        operationIdFactory: (_controllerKey: string, methodKey: string) =>
-            methodKey,
+        operationIdFactory: (_controllerKey: string, methodKey: string) => methodKey,
     };
 
     const document = SwaggerModule.createDocument(app, swaggerConfig, options);

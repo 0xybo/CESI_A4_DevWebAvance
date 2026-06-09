@@ -59,16 +59,20 @@ export class RabbitMQService implements OnModuleDestroy {
             const queues = await channel.assertQueue('', { exclusive: true, durable: false });
             const tempQueue = queues.queue;
 
-            await channel.consume(tempQueue, (msg) => {
-                if (!msg) return;
-                const parsed = JSON.parse(msg.content.toString());
-                result.push({
-                    name: parsed.name ?? parsed.queue?.name ?? 'unknown',
-                    messages: parsed.messages ?? parsed.queue?.messages ?? 0,
-                    consumers: parsed.consumers ?? parsed.queue?.consumers ?? 0,
-                    state: parsed.queue?.state ?? 'running',
-                });
-            }, { noAck: true });
+            await channel.consume(
+                tempQueue,
+                (msg) => {
+                    if (!msg) return;
+                    const parsed = JSON.parse(msg.content.toString());
+                    result.push({
+                        name: parsed.name ?? parsed.queue?.name ?? 'unknown',
+                        messages: parsed.messages ?? parsed.queue?.messages ?? 0,
+                        consumers: parsed.consumers ?? parsed.queue?.consumers ?? 0,
+                        state: parsed.queue?.state ?? 'running',
+                    });
+                },
+                { noAck: true },
+            );
 
             channel.publish('', 'amq.rabbitmq.response', Buffer.from(''), {
                 replyTo: tempQueue,

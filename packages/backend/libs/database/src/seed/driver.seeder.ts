@@ -3,11 +3,7 @@ import type { PrismaClient } from '@generated/prisma';
 import { nextDriverRef } from './helpers';
 
 /** Seed driver records for each provided user ID, assigning a random vehicle. */
-export async function seedDrivers(
-    prisma: PrismaClient,
-    driverUserIds: string[],
-    vehicles: { id: string }[],
-) {
+export async function seedDrivers(prisma: PrismaClient, driverUserIds: string[], vehicles: { id: string }[]) {
     const drivers: { id: string; user_id: string }[] = [];
 
     for (const userId of driverUserIds) {

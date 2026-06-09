@@ -10,14 +10,9 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 export class GatewayService {
     /** Internal URLs of each microservice. */
     private readonly serviceUrls = {
-        auth:
-            process.env.AUTH_SERVICE_URL ||
-            'http://transvirex-authentication:3000',
-        billing:
-            process.env.BILLING_SERVICE_URL || 'http://transvirex-billing:3000',
-        delivery:
-            process.env.DELIVERY_SERVICE_URL ||
-            'http://transvirex-delivery:3000',
+        auth: process.env.AUTH_SERVICE_URL || 'http://transvirex-authentication:3000',
+        billing: process.env.BILLING_SERVICE_URL || 'http://transvirex-billing:3000',
+        delivery: process.env.DELIVERY_SERVICE_URL || 'http://transvirex-delivery:3000',
         stock: process.env.STOCK_SERVICE_URL || 'http://transvirex-stock:3000',
         users: process.env.USERS_SERVICE_URL || 'http://transvirex-users:3000',
     };
@@ -45,11 +40,7 @@ export class GatewayService {
     }
 
     /** Build headers to propagate user identity to downstream services. */
-    private buildUserHeaders(user?: {
-        sub: string;
-        email: string;
-        role: string;
-    }): Record<string, string> {
+    private buildUserHeaders(user?: { sub: string; email: string; role: string }): Record<string, string> {
         if (!user) return {};
         return {
             'X-User-Id': user.sub,
@@ -59,11 +50,7 @@ export class GatewayService {
     }
 
     /** Proxy a POST request to a downstream microservice. */
-    private async proxyPost(
-        url: string,
-        body: unknown,
-        user?: { sub: string; email: string; role: string },
-    ) {
+    private async proxyPost(url: string, body: unknown, user?: { sub: string; email: string; role: string }) {
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -87,10 +74,7 @@ export class GatewayService {
     }
 
     /** Proxy a GET request to a downstream microservice. */
-    private async proxyGet(
-        url: string,
-        user?: { sub: string; email: string; role: string },
-    ) {
+    private async proxyGet(url: string, user?: { sub: string; email: string; role: string }) {
         try {
             const response = await fetch(url, {
                 headers: this.buildUserHeaders(user),
@@ -109,24 +93,21 @@ export class GatewayService {
     }
 
     login(body: { email: string; password: string }) {
-        return this.proxyPost(
-            `${this.serviceUrls.auth}/auth/login`,
-            body,
-        ) as Promise<{ access_token: string; refresh_token: string }>;
+        return this.proxyPost(`${this.serviceUrls.auth}/auth/login`, body) as Promise<{
+            access_token: string;
+            refresh_token: string;
+        }>;
     }
 
     refresh(body: { refresh_token: string }) {
-        return this.proxyPost(
-            `${this.serviceUrls.auth}/auth/refresh`,
-            body,
-        ) as Promise<{ access_token: string; refresh_token: string }>;
+        return this.proxyPost(`${this.serviceUrls.auth}/auth/refresh`, body) as Promise<{
+            access_token: string;
+            refresh_token: string;
+        }>;
     }
 
     logout(body: { refresh_token: string }) {
-        return this.proxyPost(
-            `${this.serviceUrls.auth}/auth/logout`,
-            body,
-        ) as Promise<{ success: boolean }>;
+        return this.proxyPost(`${this.serviceUrls.auth}/auth/logout`, body) as Promise<{ success: boolean }>;
     }
 
     /** Return a simple greeting message. */
@@ -209,12 +190,12 @@ export class GatewayService {
     /** Fetch paginated data from a PostgreSQL table. */
     async getPostgresTableData(table: string, page: number, pageSize: number) {
         const offset = (page - 1) * pageSize;
-        const rows = await this.prisma.$queryRawUnsafe<
-            { [key: string]: unknown }[]
-        >(`SELECT * FROM "${table}" LIMIT ${pageSize} OFFSET ${offset}`);
-        const countResult = await this.prisma.$queryRawUnsafe<
-            { count: string }[]
-        >(`SELECT COUNT(*) as count FROM "${table}"`);
+        const rows = await this.prisma.$queryRawUnsafe<{ [key: string]: unknown }[]>(
+            `SELECT * FROM "${table}" LIMIT ${pageSize} OFFSET ${offset}`,
+        );
+        const countResult = await this.prisma.$queryRawUnsafe<{ count: string }[]>(
+            `SELECT COUNT(*) as count FROM "${table}"`,
+        );
         const totalCount = Number(countResult[0]?.count ?? 0);
         const columns = rows.length > 0 ? Object.keys(rows[0]) : [];
         return {
@@ -239,11 +220,7 @@ export class GatewayService {
     }
 
     /** Fetch paginated documents from a MongoDB collection. */
-    async getMongoCollectionData(
-        collection: string,
-        page: number,
-        pageSize: number,
-    ) {
+    async getMongoCollectionData(collection: string, page: number, pageSize: number) {
         const db = await this.mongoDBService.getDb();
         const coll = db.collection(collection);
         const offset = (page - 1) * pageSize;
@@ -265,11 +242,7 @@ export class GatewayService {
     }
 
     /** Persist a frontend log entry to MongoDB. */
-    async logFromFrontend(body: {
-        level: string;
-        message: string;
-        metadata?: Record<string, unknown>;
-    }) {
+    async logFromFrontend(body: { level: string; message: string; metadata?: Record<string, unknown> }) {
         const db = await this.mongoDBService.getDb();
         await db.collection('frontend_logs').insertOne({
             level: body.level || 'error',
@@ -281,13 +254,7 @@ export class GatewayService {
     }
 
     /** Retrieve paginated logs from a MongoDB collection with optional filters. */
-    async getLogs(
-        collectionName: string,
-        level?: string,
-        service?: string,
-        page: number = 1,
-        pageSize: number = 50,
-    ) {
+    async getLogs(collectionName: string, level?: string, service?: string, page: number = 1, pageSize: number = 50) {
         const db = await this.mongoDBService.getDb();
         const coll = db.collection(collectionName);
 
@@ -297,12 +264,7 @@ export class GatewayService {
 
         const offset = (page - 1) * pageSize;
         const totalCount = await coll.countDocuments(filter);
-        const raw = await coll
-            .find(filter)
-            .sort({ timestamp: -1 })
-            .skip(offset)
-            .limit(pageSize)
-            .toArray();
+        const raw = await coll.find(filter).sort({ timestamp: -1 }).skip(offset).limit(pageSize).toArray();
 
         const logs = raw.map((r: Record<string, unknown>) => {
             const { _id, ...rest } = r;

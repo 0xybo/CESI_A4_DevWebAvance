@@ -34,10 +34,7 @@ async function bootstrap() {
 
     const PORT = process.env.PORT || 3000;
     await app.listen(PORT);
-    logger.log(
-        `Authentication service listening on port ${PORT} (HTTP + RabbitMQ)`,
-        'Bootstrap',
-    );
+    logger.log(`Authentication service listening on port ${PORT} (HTTP + RabbitMQ)`, 'Bootstrap');
 }
 
 /** Graceful shutdown on SIGTERM. */

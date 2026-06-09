@@ -33,9 +33,7 @@ export class MongoDBService implements OnModuleDestroy {
     }
 
     /** Parse and execute a MongoDB shell-like command string, returning tabular results. */
-    async executeCommand(
-        command: string,
-    ): Promise<{ columns: string[]; rows: any[]; rowCount: number }> {
+    async executeCommand(command: string): Promise<{ columns: string[]; rows: any[]; rowCount: number }> {
         const db = await this.getDb();
         const trimmed = command.trim();
 
@@ -54,17 +52,13 @@ export class MongoDBService implements OnModuleDestroy {
 
         if (trimmed.includes('.find(') || trimmed.includes('.findOne(')) {
             const isOne = trimmed.includes('.findOne(');
-            const pipelineMatch = trimmed.match(
-                /\.(find|findOne)\(([\s\S]*)\)/,
-            );
+            const pipelineMatch = trimmed.match(/\.(find|findOne)\(([\s\S]*)\)/);
             let filter = {};
             const options: any = {};
 
             if (pipelineMatch && pipelineMatch[2]?.trim()) {
                 try {
-                    const parsed = Function(
-                        `"use strict"; return (${pipelineMatch[2].trim()})`,
-                    )();
+                    const parsed = Function(`"use strict"; return (${pipelineMatch[2].trim()})`)();
                     if (typeof parsed === 'object' && !Array.isArray(parsed)) {
                         filter = parsed;
                     }
@@ -79,55 +73,31 @@ export class MongoDBService implements OnModuleDestroy {
             const sortMatch = trimmed.match(/\.sort\(\s*(\{[\s\S]*?\})\s*\)/);
             if (sortMatch) {
                 try {
-                    options.sort = Function(
-                        `"use strict"; return (${sortMatch[1]})`,
-                    )();
+                    options.sort = Function(`"use strict"; return (${sortMatch[1]})`)();
                 } catch {}
             }
 
             const cursor = collection.find(filter, options).limit(limit);
-            results = isOne
-                ? (await cursor.toArray()).slice(0, 1)
-                : await cursor.toArray();
+            results = isOne ? (await cursor.toArray()).slice(0, 1) : await cursor.toArray();
         } else if (trimmed.includes('.aggregate(')) {
-            const pipelineMatch = trimmed.match(
-                /\.aggregate\(\s*(\[[\s\S]*?\])\s*\)/,
-            );
-            const pipeline = pipelineMatch
-                ? Function(`"use strict"; return (${pipelineMatch[1]})`)()
-                : [];
+            const pipelineMatch = trimmed.match(/\.aggregate\(\s*(\[[\s\S]*?\])\s*\)/);
+            const pipeline = pipelineMatch ? Function(`"use strict"; return (${pipelineMatch[1]})`)() : [];
             results = await collection.aggregate(pipeline).toArray();
         } else if (trimmed.includes('.countDocuments(')) {
-            const filterMatch = trimmed.match(
-                /\.countDocuments\(\s*(\{[\s\S]*?\})\s*\)/,
-            );
-            const filterObj = filterMatch
-                ? Function(`"use strict"; return (${filterMatch[1]})`)()
-                : {};
+            const filterMatch = trimmed.match(/\.countDocuments\(\s*(\{[\s\S]*?\})\s*\)/);
+            const filterObj = filterMatch ? Function(`"use strict"; return (${filterMatch[1]})`)() : {};
             const count = await collection.countDocuments(filterObj);
             results = [{ count }];
         } else if (trimmed.includes('.distinct(')) {
-            const match = trimmed.match(
-                /\.distinct\(\s*['"](.+?)['"]\s*(?:,\s*(\{[\s\S]*?\})\s*)?\)/,
-            );
+            const match = trimmed.match(/\.distinct\(\s*['"](.+?)['"]\s*(?:,\s*(\{[\s\S]*?\})\s*)?\)/);
             const field = match ? match[1] : '_id';
-            const query =
-                match && match[2]
-                    ? Function(`"use strict"; return (${match[2]})`)()
-                    : {};
+            const query = match && match[2] ? Function(`"use strict"; return (${match[2]})`)() : {};
             const distinct = await collection.distinct(field, query);
             results = distinct.map((v: any) => ({ [field]: v }));
-        } else if (
-            trimmed.includes('.insertOne(') ||
-            trimmed.includes('.insertMany(')
-        ) {
+        } else if (trimmed.includes('.insertOne(') || trimmed.includes('.insertMany(')) {
             const isMany = trimmed.includes('.insertMany(');
-            const docMatch = trimmed.match(
-                /\.insert(?:One|Many)\(\s*(\[[\s\S]*?\]|\{[\s\S]*?\})\s*\)/,
-            );
-            const doc = docMatch
-                ? Function(`"use strict"; return (${docMatch[1]})`)()
-                : {};
+            const docMatch = trimmed.match(/\.insert(?:One|Many)\(\s*(\[[\s\S]*?\]|\{[\s\S]*?\})\s*\)/);
+            const doc = docMatch ? Function(`"use strict"; return (${docMatch[1]})`)() : {};
             if (isMany) {
                 const insertResult = await collection.insertMany(doc);
                 results = [

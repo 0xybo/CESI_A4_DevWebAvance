@@ -11,10 +11,7 @@ const POSTGRES_DB = process.env.POSTGRES_DB || 'transvirex';
 
 /** Service wrapping the Prisma ORM client with lifecycle hooks for PostgreSQL. */
 @Injectable()
-export class PrismaService
-    extends PrismaClient
-    implements OnModuleInit, OnModuleDestroy
-{
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
     constructor() {
         const URL = `postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}`;
         const adapter = new PrismaPg(URL);

@@ -1,10 +1,4 @@
-import {
-    CanActivate,
-    ExecutionContext,
-    ForbiddenException,
-    Injectable,
-    UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
@@ -59,9 +53,7 @@ export class JwtAuthGuard implements CanActivate {
 
         if (requiredRoles && requiredRoles.length > 0) {
             if (!requiredRoles.includes(payload.role)) {
-                throw new ForbiddenException(
-                    `Accès refusé — rôle requis : ${requiredRoles.join(' ou ')}`,
-                );
+                throw new ForbiddenException(`Accès refusé — rôle requis : ${requiredRoles.join(' ou ')}`);
             }
         }
 

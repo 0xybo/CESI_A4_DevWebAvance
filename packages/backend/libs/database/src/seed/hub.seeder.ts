@@ -3,11 +3,7 @@ import type { PrismaClient } from '@generated/prisma';
 import { nextHubRef } from './helpers';
 
 /** Seed a given number of random hubs. */
-export async function seedHubs(
-    prisma: PrismaClient,
-    count: number,
-    addressIds: string[],
-) {
+export async function seedHubs(prisma: PrismaClient, count: number, addressIds: string[]) {
     const hubs: { id: string; address_id: string | null }[] = [];
 
     for (let i = 0; i < count; i++) {

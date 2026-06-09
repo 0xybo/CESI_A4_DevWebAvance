@@ -28,21 +28,45 @@ function pad(n: number, len = 3) {
 }
 
 /** Generate the next hub reference (HUB-XXX). */
-export function nextHubRef() { hubCounter++; return `HUB-${pad(hubCounter)}`; }
+export function nextHubRef() {
+    hubCounter++;
+    return `HUB-${pad(hubCounter)}`;
+}
 /** Generate the next user reference (USR-XXX). */
-export function nextUserRef() { userCounter++; return `USR-${pad(userCounter)}`; }
+export function nextUserRef() {
+    userCounter++;
+    return `USR-${pad(userCounter)}`;
+}
 /** Generate the next vehicle reference (VEH-XXX). */
-export function nextVehicleRef() { vehicleCounter++; return `VEH-${pad(vehicleCounter)}`; }
+export function nextVehicleRef() {
+    vehicleCounter++;
+    return `VEH-${pad(vehicleCounter)}`;
+}
 /** Generate the next driver reference (DRV-XXX). */
-export function nextDriverRef() { driverCounter++; return `DRV-${pad(driverCounter)}`; }
+export function nextDriverRef() {
+    driverCounter++;
+    return `DRV-${pad(driverCounter)}`;
+}
 /** Generate the next customer reference (CUS-XXX). */
-export function nextCustomerRef() { customerCounter++; return `CUS-${pad(customerCounter)}`; }
+export function nextCustomerRef() {
+    customerCounter++;
+    return `CUS-${pad(customerCounter)}`;
+}
 /** Generate the next invoice reference (INV-XXX). */
-export function nextInvoiceRef() { invoiceCounter++; return `INV-${pad(invoiceCounter)}`; }
+export function nextInvoiceRef() {
+    invoiceCounter++;
+    return `INV-${pad(invoiceCounter)}`;
+}
 /** Generate the next delivery reference (DEL-XXX). */
-export function nextDeliveryRef() { deliveryCounter++; return `DEL-${pad(deliveryCounter)}`; }
+export function nextDeliveryRef() {
+    deliveryCounter++;
+    return `DEL-${pad(deliveryCounter)}`;
+}
 /** Generate the next parcel reference (PAR-XXX). */
-export function nextParcelRef() { parcelCounter++; return `PAR-${pad(parcelCounter)}`; }
+export function nextParcelRef() {
+    parcelCounter++;
+    return `PAR-${pad(parcelCounter)}`;
+}
 
 /** Hash a plaintext password using bcrypt with a salt round of 10. */
 export async function hashPassword(password: string): Promise<string> {
