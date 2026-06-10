@@ -23,6 +23,8 @@ import { JwtAuthGuard } from '../../../libs/guards/src/jwt-auth.guard';
 import { AuthController } from './controllers/auth.controller';
 import { BillingController } from './controllers/billing.controller';
 
+import { DeliveriesController } from './controllers/deliveries.controller';
+
 import { DebugController } from './controllers/debug.controller';
 
 import { HealthController } from './controllers/health.controller';
@@ -72,6 +74,8 @@ import { GatewayService } from './gateway.service';
         AuthController,
 
         BillingController,
+
+        DeliveriesController,
 
         DebugController,
 

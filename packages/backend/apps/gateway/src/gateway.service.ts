@@ -97,6 +97,26 @@ export class GatewayService {
         }
     }
 
+    /** Proxy a DELETE request to a downstream microservice. */
+    private async proxyDelete(url: string, user?: { sub: string; email: string; role: string }) {
+        try {
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: this.buildUserHeaders(user),
+                signal: AbortSignal.timeout(5000),
+            });
+            const data = await response.json();
+            if (!response.ok) throw new HttpException(data, response.status);
+            return data;
+        } catch (e) {
+            if (e instanceof HttpException) throw e;
+            throw new HttpException(
+                { status: 'error', message: 'Service unreachable' },
+                HttpStatus.SERVICE_UNAVAILABLE,
+            );
+        }
+    }
+
     /** Proxy a GET request to a downstream microservice. */
     private async proxyGet(url: string, user?: { sub: string; email: string; role: string }) {
         try {
@@ -211,6 +231,95 @@ export class GatewayService {
         user?: { sub: string; email: string; role: string },
     ) {
         return this.proxyPost(`${this.serviceUrls.billing}/billing`, body, user);
+    }
+
+    /** Update an invoice via the billing service. */
+    updateBilling(
+        id: string,
+        body: unknown,
+        user?: { sub: string; email: string; role: string },
+    ) {
+        return this.proxyPatch(`${this.serviceUrls.billing}/billing/${id}`, body, user);
+    }
+
+    /** Delete an invoice via the billing service. */
+    deleteBilling(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyDelete(`${this.serviceUrls.billing}/billing/${id}`, user);
+    }
+
+    /** List deliveries via the delivery service. */
+    getDeliveries(
+        page: number,
+        limit: number,
+        user?: { sub: string; email: string; role: string },
+    ) {
+        return this.proxyGet(
+            `${this.serviceUrls.delivery}/deliveries?page=${page}&limit=${limit}`,
+            user,
+        );
+    }
+
+    /** Get a delivery by ID via the delivery service. */
+    getDelivery(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyGet(`${this.serviceUrls.delivery}/deliveries/${id}`, user);
+    }
+
+    /** Create a delivery via the delivery service. */
+    createDelivery(
+        body: unknown,
+        user?: { sub: string; email: string; role: string },
+    ) {
+        return this.proxyPost(`${this.serviceUrls.delivery}/deliveries`, body, user);
+    }
+
+    /** Update a delivery via the delivery service. */
+    updateDelivery(
+        id: string,
+        body: unknown,
+        user?: { sub: string; email: string; role: string },
+    ) {
+        return this.proxyPatch(`${this.serviceUrls.delivery}/deliveries/${id}`, body, user);
+    }
+
+    /** Delete a delivery via the delivery service. */
+    deleteDelivery(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyDelete(`${this.serviceUrls.delivery}/deliveries/${id}`, user);
+    }
+
+    /** List users via the users service. */
+    getUsers(
+        page: number,
+        limit: number,
+        user?: { sub: string; email: string; role: string },
+    ) {
+        return this.proxyGet(
+            `${this.serviceUrls.users}/users?page=${page}&limit=${limit}`,
+            user,
+        );
+    }
+
+    /** Get a user by ID via the users service. */
+    getUser(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyGet(`${this.serviceUrls.users}/users/${id}`, user);
+    }
+
+    /** Create a user via the users service. */
+    createUser(body: unknown, user?: { sub: string; email: string; role: string }) {
+        return this.proxyPost(`${this.serviceUrls.users}/users`, body, user);
+    }
+
+    /** Update a user via the users service. */
+    updateUser(
+        id: string,
+        body: unknown,
+        user?: { sub: string; email: string; role: string },
+    ) {
+        return this.proxyPatch(`${this.serviceUrls.users}/users/${id}`, body, user);
+    }
+
+    /** Delete a user via the users service. */
+    deleteUser(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyDelete(`${this.serviceUrls.users}/users/${id}`, user);
     }
 
     /** Proxy health check to the stock service. */

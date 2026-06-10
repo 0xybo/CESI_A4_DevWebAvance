@@ -2,9 +2,11 @@ import {
     Body,
     Controller,
     DefaultValuePipe,
+    Delete,
     Get,
     Param,
     ParseIntPipe,
+    Patch,
     Post,
     Query,
 } from '@nestjs/common';
@@ -48,5 +50,25 @@ export class BillingController {
     @ApiResponse({ status: 201, description: 'Invoice created' })
     createBilling(@Body() body: Record<string, unknown>) {
         return this.gatewayService.createBilling(body);
+    }
+
+    @ApiTags('Billing')
+    @Public()
+    @Patch('billing/:id')
+    @ApiOperation({ summary: 'Update an invoice' })
+    @ApiParam({ name: 'id', description: 'Invoice UUID' })
+    @ApiResponse({ status: 200, description: 'Invoice updated' })
+    updateBilling(@Param('id') id: string, @Body() body: Record<string, unknown>) {
+        return this.gatewayService.updateBilling(id, body);
+    }
+
+    @ApiTags('Billing')
+    @Public()
+    @Delete('billing/:id')
+    @ApiOperation({ summary: 'Delete an invoice' })
+    @ApiParam({ name: 'id', description: 'Invoice UUID' })
+    @ApiResponse({ status: 200, description: 'Invoice deleted' })
+    deleteBilling(@Param('id') id: string) {
+        return this.gatewayService.deleteBilling(id);
     }
 }

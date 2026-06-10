@@ -1,14 +1,47 @@
 import { PrismaService } from '@app/database';
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+    BadRequestException,
+    Injectable,
+    NotFoundException,
+} from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
+import type { CreateUserDto } from './dto/create-user.dto';
+import type { UpdateUserDto } from './dto/update-user.dto';
+
+const userSelect = {
+    id: true,
+    reference: true,
+    hub_id: true,
+    firstname: true,
+    lastname: true,
+    phone_number: true,
+    work_phone_number: true,
+    email: true,
+    work_email: true,
+    status: true,
+    role: true,
+} as const;
 
 /** Service handling user-related business logic. */
 @Injectable()
 export class UsersService {
     constructor(private readonly prisma: PrismaService) {}
 
+    private async generateUserReference(): Promise<string> {
+        const lastUser = await this.prisma.user.findFirst({
+            orderBy: { reference: 'desc' },
+            select: { reference: true },
+        });
+        let nextNum = 1;
+        if (lastUser) {
+            const match = lastUser.reference.match(/USR-(\d+)/);
+            if (match) nextNum = parseInt(match[1], 10) + 1;
+        }
+        return `USR-${String(nextNum).padStart(3, '0')}`;
+    }
+
     /**
      * Generate the next driver reference (DRV-XXX) based on the last existing reference.
-     * @returns A new unique driver reference string.
      */
     private async generateDriverReference(): Promise<string> {
         const lastDriver = await this.prisma.driver.findFirst({
@@ -23,19 +56,116 @@ export class UsersService {
         return `DRV-${String(nextNum).padStart(3, '0')}`;
     }
 
+    async findAll(page: number, limit: number) {
+        const [data, total] = await Promise.all([
+            this.prisma.user.findMany({
+                skip: (page - 1) * limit,
+                take: limit,
+                select: userSelect,
+                orderBy: { reference: 'asc' },
+            }),
+            this.prisma.user.count(),
+        ]);
+
+        return { data, page, limit, total };
+    }
+
+    async findById(id: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id },
+            select: userSelect,
+        });
+        if (!user) throw new NotFoundException(`User ${id} not found`);
+        return user;
+    }
+
+    async create(dto: CreateUserDto) {
+        const reference = dto.reference ?? (await this.generateUserReference());
+        const hash_password = dto.password
+            ? await bcrypt.hash(dto.password, 10)
+            : null;
+
+        return this.prisma.user.create({
+            data: {
+                reference,
+                hub_id: dto.hub_id ?? null,
+                firstname: dto.firstname ?? null,
+                lastname: dto.lastname ?? null,
+                phone_number: dto.phone_number ?? null,
+                work_phone_number: dto.work_phone_number ?? null,
+                email: dto.email ?? null,
+                work_email: dto.work_email ?? null,
+                hash_password,
+                status: dto.status ?? null,
+                role: dto.role ?? null,
+            },
+            select: userSelect,
+        });
+    }
+
+    async update(id: string, dto: UpdateUserDto) {
+        const existing = await this.prisma.user.findUnique({ where: { id } });
+        if (!existing) throw new NotFoundException(`User ${id} not found`);
+
+        const updateData: Record<string, unknown> = {};
+        if (dto.hub_id !== undefined) updateData.hub_id = dto.hub_id;
+        if (dto.firstname !== undefined) updateData.firstname = dto.firstname;
+        if (dto.lastname !== undefined) updateData.lastname = dto.lastname;
+        if (dto.phone_number !== undefined) {
+            updateData.phone_number = dto.phone_number;
+        }
+        if (dto.work_phone_number !== undefined) {
+            updateData.work_phone_number = dto.work_phone_number;
+        }
+        if (dto.email !== undefined) updateData.email = dto.email;
+        if (dto.work_email !== undefined) updateData.work_email = dto.work_email;
+        if (dto.status !== undefined) updateData.status = dto.status;
+        if (dto.role !== undefined) updateData.role = dto.role;
+        if (dto.password !== undefined) {
+            updateData.hash_password = await bcrypt.hash(dto.password, 10);
+        }
+
+        return this.prisma.user.update({
+            where: { id },
+            data: updateData,
+            select: userSelect,
+        });
+    }
+
+    async remove(id: string) {
+        const existing = await this.prisma.user.findUnique({
+            where: { id },
+            include: { _count: { select: { managed_invoices: true } } },
+        });
+        if (!existing) throw new NotFoundException(`User ${id} not found`);
+
+        if (existing._count.managed_invoices > 0) {
+            throw new BadRequestException(
+                'Cannot delete user linked to managed invoices',
+            );
+        }
+
+        await this.prisma.driver.deleteMany({ where: { user_id: id } });
+        await this.prisma.user.delete({ where: { id } });
+        return { success: true, id };
+    }
+
     /**
      * Create a Driver profile for a user.
-     * @param userId The ID of the user to create the driver profile for.
-     * @param dto An object containing optional vehicle_id and rating for the driver profile.
-     * @returns The created Driver profile with related user and vehicle data.
      */
     async createDriver(userId: string, dto: { vehicle_id?: string; rating?: number }) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
         if (!user) throw new NotFoundException('Utilisateur introuvable');
-        if (user.role !== 'driver') throw new BadRequestException("L'utilisateur doit avoir le rôle driver");
+        if (user.role !== 'driver') {
+            throw new BadRequestException("L'utilisateur doit avoir le rôle driver");
+        }
 
-        const existing = await this.prisma.driver.findUnique({ where: { user_id: userId } });
-        if (existing) throw new BadRequestException('Un profil Driver existe déjà pour cet utilisateur');
+        const existing = await this.prisma.driver.findUnique({
+            where: { user_id: userId },
+        });
+        if (existing) {
+            throw new BadRequestException('Un profil Driver existe déjà pour cet utilisateur');
+        }
 
         const reference = await this.generateDriverReference();
 
@@ -52,8 +182,6 @@ export class UsersService {
 
     /**
      * Get the Driver profile for a user.
-     * @param userId The ID of the user whose driver profile to retrieve.
-     * @returns The Driver profile with related user, vehicle, and deliveries data.
      */
     async getDriver(userId: string) {
         const user = await this.prisma.user.findUnique({ where: { id: userId } });
