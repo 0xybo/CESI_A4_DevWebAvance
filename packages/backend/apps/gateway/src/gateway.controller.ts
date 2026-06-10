@@ -28,4 +28,3 @@ export class GatewayController {
         return this.gatewayService.getGatewayHealth();
     }
 }
-

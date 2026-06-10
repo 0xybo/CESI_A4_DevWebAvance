@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
 import { UsersService } from './users.service';
 
@@ -17,5 +17,17 @@ export class UsersController {
     @MessagePattern('health')
     getHealth() {
         return { status: 'ok', service: 'users' };
+    }
+
+    /** Create a Driver profile for the given user. */
+    @Post('users/:id/driver')
+    createDriver(@Param('id') id: string, @Body() body: { vehicle_id?: string; rating?: number }) {
+        return this.usersService.createDriver(id, body);
+    }
+
+    /** Get the Driver profile for the given user. */
+    @Get('users/:id/driver')
+    getDriver(@Param('id') id: string) {
+        return this.usersService.getDriver(id);
     }
 }

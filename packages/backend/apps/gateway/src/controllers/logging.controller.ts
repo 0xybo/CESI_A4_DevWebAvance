@@ -21,4 +21,3 @@ export class LoggingController {
         return this.gatewayService.logFromFrontend(body);
     }
 }
-

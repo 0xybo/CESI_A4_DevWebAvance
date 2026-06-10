@@ -51,8 +51,15 @@ export async function seedUsers(prisma: PrismaClient, hubIds: string[], extraCou
         users.push({ id: user.id, role: su.role, email: su.email });
     }
 
-    const ROLES: ('dispatcher' | 'driver' | 'driver' | 'business_manager' | 'business_manager' | 'admin' | 'driver')[] =
-        ['dispatcher', 'driver', 'driver', 'business_manager', 'business_manager', 'admin', 'driver'];
+    const ROLES: ('dispatcher' | 'driver' | 'business_manager' | 'admin')[] = [
+        'dispatcher',
+        'driver',
+        'driver',
+        'business_manager',
+        'business_manager',
+        'admin',
+        'driver',
+    ];
 
     for (let i = 0; i < extraCount; i++) {
         const role = ROLES[i % ROLES.length];
@@ -80,4 +87,3 @@ export async function seedUsers(prisma: PrismaClient, hubIds: string[], extraCou
 
     return users;
 }
-
