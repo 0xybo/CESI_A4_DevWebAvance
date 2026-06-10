@@ -12,14 +12,7 @@ import {
     Query,
     Req,
 } from '@nestjs/common';
-import {
-    ApiBearerAuth,
-    ApiOperation,
-    ApiParam,
-    ApiQuery,
-    ApiResponse,
-    ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { CreateDeliveryDto, DeliveryStatusDto } from '../dto/create-delivery.dto';
 import { UpdateDeliveryDto } from '../dto/update-delivery.dto';
@@ -35,8 +28,7 @@ export class DeliveriesController {
     @Roles('admin', 'dispatcher', 'business_manager', 'driver')
     @ApiOperation({
         summary: 'List deliveries',
-        description:
-            'Returns a paginated list of deliveries. Drivers only see their own deliveries.',
+        description: 'Returns a paginated list of deliveries. Drivers only see their own deliveries.',
     })
     @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
     @ApiQuery({ name: 'limit', required: false, type: Number, example: 10 })
@@ -73,8 +65,7 @@ export class DeliveriesController {
     @Roles('admin', 'dispatcher', 'business_manager', 'driver')
     @ApiOperation({
         summary: 'Get delivery by ID',
-        description:
-            'Returns delivery details with linked invoice, driver, and delivery events.',
+        description: 'Returns delivery details with linked invoice, driver, and delivery events.',
     })
     @ApiParam({ name: 'id', description: 'Delivery UUID' })
     @ApiResponse({ status: 200, description: 'Delivery detail' })
@@ -109,11 +100,7 @@ export class DeliveriesController {
     @ApiParam({ name: 'id', description: 'Delivery UUID' })
     @ApiResponse({ status: 200, description: 'Delivery updated' })
     @ApiResponse({ status: 404, description: 'Delivery not found' })
-    updateDelivery(
-        @Param('id') id: string,
-        @Body() body: UpdateDeliveryDto,
-        @Req() req: Request,
-    ) {
+    updateDelivery(@Param('id') id: string, @Body() body: UpdateDeliveryDto, @Req() req: Request) {
         return this.gatewayService.updateDelivery(id, body, (req as any).user);
     }
 
