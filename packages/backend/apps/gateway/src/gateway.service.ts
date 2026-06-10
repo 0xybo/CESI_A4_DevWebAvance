@@ -120,6 +120,20 @@ export class GatewayService {
         return { status: 'ok' };
     }
 
+    /** Create a Driver profile for a user via the users service. */
+    createDriver(
+        id: string,
+        body: { vehicle_id?: string; rating?: number },
+        user?: { sub: string; email: string; role: string },
+    ) {
+        return this.proxyPost(`${this.serviceUrls.users}/users/${id}/driver`, body, user);
+    }
+
+    /** Get the Driver profile for a user via the users service. */
+    getDriver(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyGet(`${this.serviceUrls.users}/users/${id}/driver`, user);
+    }
+
     /** Proxy health check to the authentication service. */
     getAuthHealth() {
         return this.fetchHealth('auth', this.serviceUrls.auth);
@@ -287,4 +301,3 @@ export class GatewayService {
         return { deletedCount: result.deletedCount };
     }
 }
-

@@ -1,16 +1,7 @@
-import {
-    Body,
-    Controller,
-    Delete,
-    ForbiddenException,
-    Get,
-    Param,
-    Post,
-    Query,
-} from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { BlockInProduction } from '@app/guards';
-import { Public } from '../decorators/public.decorator';
+import { Body, Controller, Delete, ForbiddenException, Get, Param, Post, Query } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Public } from '../../../../libs/guards/src/public.decorator';
 import { GatewayService } from '../gateway.service';
 
 @Controller()
@@ -23,7 +14,8 @@ export class DebugController {
     @BlockInProduction()
     @ApiOperation({
         summary: 'Execute PostgreSQL query',
-        description: 'Execute an arbitrary SQL query on the PostgreSQL database. Only available in non-production environments.',
+        description:
+            'Execute an arbitrary SQL query on the PostgreSQL database. Only available in non-production environments.',
     })
     @ApiBody({
         schema: {
@@ -157,7 +149,11 @@ export class DebugController {
             type: 'object',
             required: ['command'],
             properties: {
-                command: { type: 'string', description: 'MongoDB command to execute (JSON)', example: '{"find": "users", "limit": 5}' },
+                command: {
+                    type: 'string',
+                    description: 'MongoDB command to execute (JSON)',
+                    example: '{"find": "users", "limit": 5}',
+                },
             },
         },
     })
@@ -189,7 +185,8 @@ export class DebugController {
     @BlockInProduction()
     @ApiOperation({
         summary: 'Get MongoDB collection data',
-        description: 'Fetch paginated documents from a MongoDB collection. Only available in non-production environments.',
+        description:
+            'Fetch paginated documents from a MongoDB collection. Only available in non-production environments.',
     })
     @ApiParam({ name: 'collection', description: 'Collection name', example: 'users' })
     @ApiBody({
@@ -229,7 +226,8 @@ export class DebugController {
     @BlockInProduction()
     @ApiOperation({
         summary: 'Get backend logs',
-        description: 'Fetch backend service logs with optional filtering. Only available in non-production environments.',
+        description:
+            'Fetch backend service logs with optional filtering. Only available in non-production environments.',
     })
     @ApiQuery({ name: 'level', required: false, description: 'Filter by log level', example: 'error' })
     @ApiQuery({ name: 'service', required: false, description: 'Filter by service name', example: 'gateway' })
@@ -251,7 +249,8 @@ export class DebugController {
     @BlockInProduction()
     @ApiOperation({
         summary: 'Get frontend logs',
-        description: 'Fetch frontend application logs with optional filtering. Only available in non-production environments.',
+        description:
+            'Fetch frontend application logs with optional filtering. Only available in non-production environments.',
     })
     @ApiQuery({ name: 'level', required: false, description: 'Filter by log level', example: 'error' })
     @ApiQuery({ name: 'page', required: false, description: 'Page number (1-based)', example: '1' })

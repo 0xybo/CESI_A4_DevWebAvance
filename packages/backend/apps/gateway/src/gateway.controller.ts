@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Public } from './decorators/public.decorator';
+import { Public } from '../../../libs/guards/src/public.decorator';
 import { GatewayService } from './gateway.service';
 
 @Controller()
@@ -28,4 +28,3 @@ export class GatewayController {
         return this.gatewayService.getGatewayHealth();
     }
 }
-

@@ -21,4 +21,3 @@ export async function seedVehicles(prisma: PrismaClient, count: number, hubIds: 
 
     return vehicles;
 }
-

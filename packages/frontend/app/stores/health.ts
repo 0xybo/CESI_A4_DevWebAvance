@@ -120,4 +120,3 @@ export const useHealthStore = defineStore('health', () => {
         checkAll,
     };
 });
-

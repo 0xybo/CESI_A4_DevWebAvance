@@ -1,6 +1,6 @@
 import { Body, Controller, Post } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Public } from '../decorators/public.decorator';
+import { Public } from '../../../../libs/guards/src/public.decorator';
 import { LogFrontendDto } from '../dto/log-frontend.dto';
 import { GatewayService } from '../gateway.service';
 
@@ -21,4 +21,3 @@ export class LoggingController {
         return this.gatewayService.logFromFrontend(body);
     }
 }
-

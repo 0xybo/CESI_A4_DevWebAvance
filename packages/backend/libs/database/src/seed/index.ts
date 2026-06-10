@@ -70,4 +70,3 @@ export async function seedDatabase(prisma: PrismaClient, force: boolean = false)
         deliveries: deliveries.length,
     };
 }
-
