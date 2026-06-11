@@ -722,4 +722,49 @@ export class GatewayService {
         const result = await db.collection(collectionName).deleteMany({});
         return { deletedCount: result.deletedCount };
     }
+
+    /**
+     * Send a test notification via SSE and optionally persist it in MongoDB.
+     * Used by the debug / administation UI to manually trigger notifications.
+     */
+    async sendTestNotification(notif: {
+        event: string;
+        audience: 'driver' | 'dispatcher' | 'all';
+        userId?: string;
+        deliveryId?: string;
+        driverId?: string;
+        message: string;
+        summary?: string;
+    }) {
+        const broadcastData: Record<string, unknown> = {
+            type: notif.event,
+            deliveryId: notif.deliveryId ?? null,
+            driverId: notif.driverId ?? null,
+            message: notif.message,
+            userId: notif.userId ?? null,
+            timestamp: new Date().toISOString(),
+            _test: true,
+        };
+
+        const filter =
+            notif.audience === 'all'
+                ? undefined
+                : (client: { userId: string; role: string }) => {
+                      if (notif.audience === 'driver') return client.role === 'driver';
+                      return client.role === 'dispatcher' || client.role === 'admin';
+                  };
+
+        this.sseService.broadcast(notif.event, broadcastData, filter);
+
+        if (notif.userId && (notif.event === 'delivery:assigned' || notif.event === 'delivery:status')) {
+            await this.createDriverNotification(
+                notif.userId,
+                notif.summary ?? notif.message,
+                notif.deliveryId ?? 'debug',
+                notif.event === 'delivery:assigned' ? 'assignment' : 'status',
+            );
+        }
+
+        return { success: true, event: notif.event, audience: notif.audience };
+    }
 }

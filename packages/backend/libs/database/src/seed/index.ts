@@ -12,7 +12,6 @@ import { seedParcels } from './parcel.seeder';
 import { seedUsers } from './user.seeder';
 import { seedVehicles } from './vehicle.seeder';
 
-/** Result of a database seeding operation. */
 export interface SeedResult {
     addresses: number;
     hubs: number;
@@ -24,7 +23,6 @@ export interface SeedResult {
     deliveries: number;
 }
 
-/** Seed the database with realistic fake data. When `force` is true, existing data is deleted first. */
 export async function seedDatabase(prisma: PrismaClient, force: boolean = false): Promise<SeedResult> {
     const existing = await prisma.user.findFirst();
     if (existing) {
@@ -45,18 +43,18 @@ export async function seedDatabase(prisma: PrismaClient, force: boolean = false)
     faker.seed(42);
     resetCounters();
 
-    const addressIds = await seedAddresses(prisma, 15);
+    const addressIds = await seedAddresses(prisma, 30);
     const hubs = await seedHubs(prisma, 5, addressIds);
     const hubIds = hubs.map((h) => h.id);
-    const users = await seedUsers(prisma, hubIds, 7);
-    const vehicles = await seedVehicles(prisma, 8, hubIds);
+    const users = await seedUsers(prisma, hubIds, 160);
+    const vehicles = await seedVehicles(prisma, 40, hubIds);
     const driverUserIds = users.filter((u) => u.role === 'driver').map((u) => u.id);
     const drivers = await seedDrivers(prisma, driverUserIds, vehicles);
-    const customers = await seedCustomers(prisma, 10, hubIds, addressIds);
+    const customers = await seedCustomers(prisma, 50, hubIds, addressIds);
     const businessManagerUsers = users.filter((u) => u.role === 'business_manager');
-    const invoices = await seedInvoices(prisma, 20, customers, hubs, addressIds, businessManagerUsers);
-    const deliveries = await seedDeliveries(prisma, 20, invoices, drivers);
-    await seedParcels(prisma, 2, invoices);
+    const invoices = await seedInvoices(prisma, 600, customers, hubs, addressIds, businessManagerUsers);
+    const deliveries = await seedDeliveries(prisma, 600, invoices, drivers);
+    await seedParcels(prisma, invoices);
     await seedDeliveryEvents(prisma, deliveries, 1, 3);
 
     return {

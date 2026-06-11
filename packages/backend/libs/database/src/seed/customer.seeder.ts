@@ -1,8 +1,8 @@
 import { faker } from '@faker-js/faker';
 import type { PrismaClient } from '@generated/prisma';
 import { nextCustomerRef } from './helpers';
+import { generateFrenchPhone, randomCompany } from './french-data';
 
-/** Seed a given number of random customers linked to hubs and addresses. */
 export async function seedCustomers(prisma: PrismaClient, count: number, hubIds: string[], addressIds: string[]) {
     const customers: { id: string }[] = [];
     const types = ['individual', 'company', 'association'];
@@ -14,11 +14,11 @@ export async function seedCustomers(prisma: PrismaClient, count: number, hubIds:
         const customer = await prisma.customer.create({
             data: {
                 reference: nextCustomerRef(),
-                customer_name: faker.company.name(),
+                customer_name: randomCompany(),
                 customer_type: faker.helpers.arrayElement(types),
                 contact_firstname: firstname,
                 contact_lastname: lastname,
-                phone_number: faker.phone.number(),
+                phone_number: generateFrenchPhone(),
                 email: faker.internet.email({ firstName: firstname, lastName: lastname }).toLowerCase(),
                 status: faker.helpers.arrayElement(['active', 'active', 'active', 'inactive']),
                 hub_id: faker.helpers.arrayElement(hubIds),

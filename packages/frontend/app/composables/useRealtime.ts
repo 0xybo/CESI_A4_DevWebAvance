@@ -1,3 +1,4 @@
+import { useCookie } from '#app';
 import { useNotificationStore } from '@/stores/notification';
 
 type SseEventType =
@@ -28,7 +29,9 @@ export function useRealtime() {
 
     function connect() {
         if (eventSource.value) return;
-        const es = new EventSource('/api/events');
+        const token = useCookie('access_token').value;
+        const url = token ? `/api/events?token=${encodeURIComponent(token)}` : '/api/events';
+        const es = new EventSource(url);
         eventSource.value = es;
 
         es.addEventListener('open', () => {
