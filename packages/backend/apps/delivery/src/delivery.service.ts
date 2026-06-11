@@ -8,7 +8,13 @@ import type { DeliveryFiltersDto, DeliveryRequestUser } from './dto/delivery-fil
 import type { UpdateDeliveryDto } from './dto/update-delivery.dto';
 
 const deliveryInclude = {
-    invoice: true,
+    invoice: {
+        include: {
+            customer: { select: { id: true, customer_name: true } },
+            hub: { select: { id: true, name: true } },
+            delivery_address: { select: { address: true, city: true, postal_code: true } },
+        },
+    },
     driver: {
         include: {
             user: {

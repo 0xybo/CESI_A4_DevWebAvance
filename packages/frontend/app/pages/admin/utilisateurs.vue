@@ -28,7 +28,16 @@
                 </CardContent>
             </Card>
 
-            <Card>
+            <div v-if="loading" class="text-center py-12 text-muted-foreground">
+                <p>Chargement...</p>
+            </div>
+
+            <div v-else-if="error" class="text-center py-12 text-muted-foreground">
+                <p>Erreur : {{ error }}</p>
+                <Button variant="outline" class="mt-4" @click="fetchUsers">Réessayer</Button>
+            </div>
+
+            <Card v-else>
                 <CardContent class="p-0">
                     <Table>
                         <TableHeader>
@@ -42,23 +51,21 @@
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="u in filtered" :key="u.ref">
-                                <TableCell class="font-mono text-xs text-muted-foreground">{{ u.ref }}</TableCell>
+                            <TableRow v-for="u in filtered" :key="u.id">
+                                <TableCell class="font-mono text-xs text-muted-foreground">{{ u.reference }}</TableCell>
                                 <TableCell>
                                     <div class="flex items-center gap-2.5">
                                         <div
                                             class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                                             :class="roleColor(u.role)"
                                         >
-                                            {{ u.name.charAt(0) }}
+                                            {{ (u.name || '?').charAt(0) }}
                                         </div>
                                         <span class="font-medium">{{ u.name }}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell class="text-xs text-muted-foreground">{{ u.email }}</TableCell>
-                                <TableCell
-                                    ><Badge :class="roleBadge(u.role)">{{ u.role }}</Badge></TableCell
-                                >
+                                <TableCell><Badge :class="roleBadge(u.role)">{{ u.role }}</Badge></TableCell>
                                 <TableCell>{{ u.hub }}</TableCell>
                                 <TableCell>
                                     <Badge
@@ -90,98 +97,76 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search } from '@lucide/vue';
+import type { ApiUser, PaginatedResponse } from '@/composables/useApi';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Utilisateurs — Transvirex' });
 
-/** Search/filter input value. */
+const { get } = useApi();
 const search = ref('');
-/** Selected role filter. */
 const filterRole = ref('');
-/** Static list of users for the demo table. */
-const users = [
-    {
-        ref: 'USR-001',
-        name: 'Admin Transvirex',
-        email: 'admin@transvirex.com',
-        role: 'admin',
-        hub: 'Hub Paris Centre',
-        status: 'active',
-    },
-    {
-        ref: 'USR-002',
-        name: 'Jean Dupont',
-        email: 'dispatcher@transvirex.com',
-        role: 'dispatcher',
-        hub: 'Hub Paris Centre',
-        status: 'active',
-    },
-    {
-        ref: 'USR-003',
-        name: 'Pierre Martin',
-        email: 'driver@transvirex.com',
-        role: 'driver',
-        hub: 'Hub Paris Centre',
-        status: 'active',
-    },
-    {
-        ref: 'USR-004',
-        name: 'Sophie Bernard',
-        email: 's.bernard@transvirex.com',
-        role: 'business_manager',
-        hub: 'Hub Lyon',
-        status: 'active',
-    },
-    {
-        ref: 'USR-005',
-        name: 'Marc Leroy',
-        email: 'm.leroy@transvirex.com',
-        role: 'dispatcher',
-        hub: 'Hub Bordeaux',
-        status: 'inactive',
-    },
-    {
-        ref: 'USR-006',
-        name: 'Claire Thomas',
-        email: 'c.thomas@transvirex.com',
-        role: 'driver',
-        hub: 'Hub Lyon',
-        status: 'active',
-    },
-];
-/** Users filtered by role and search query. */
+const loading = ref(true);
+const error = ref<string | null>(null);
+const users = ref<Array<{
+    id: string;
+    reference: string;
+    name: string;
+    email: string;
+    role: string;
+    hub: string;
+    status: string;
+}>>([]);
+
+async function fetchUsers() {
+    loading.value = true;
+    error.value = null;
+    try {
+        const res = await get<PaginatedResponse<ApiUser>>('/users?limit=100');
+        users.value = res.data.map((u) => ({
+            id: u.id,
+            reference: u.reference,
+            name: [u.firstname, u.lastname].filter(Boolean).join(' ') || u.email || '—',
+            email: u.email ?? '—',
+            role: u.role,
+            hub: u.hub?.name ?? u.hub_id ?? '—',
+            status: u.status,
+        }));
+    } catch (e: any) {
+        error.value = e?.message ?? 'Impossible de charger les utilisateurs';
+    } finally {
+        loading.value = false;
+    }
+}
+
 const filtered = computed(() =>
-    users.filter(
+    users.value.filter(
         (u) =>
             (filterRole.value === '' || u.role === filterRole.value) &&
-            (!search.value || Object.values(u).some((v) => v.toLowerCase().includes(search.value.toLowerCase()))),
+            (!search.value || Object.values(u).some((v) => String(v).toLowerCase().includes(search.value.toLowerCase()))),
     ),
 );
-/** Return Tailwind background color for a role avatar. */
+
 function roleColor(r: string) {
     return (
-        (
-            {
-                admin: 'bg-red-600',
-                dispatcher: 'bg-blue-600',
-                driver: 'bg-green-600',
-                business_manager: 'bg-purple-600',
-            } as Record<string, string>
-        )[r] ?? 'bg-gray-600'
-    );
+        {
+            admin: 'bg-red-600',
+            dispatcher: 'bg-blue-600',
+            driver: 'bg-green-600',
+            business_manager: 'bg-purple-600',
+        } as Record<string, string>
+    )[r] ?? 'bg-gray-600';
 }
-/** Return Tailwind badge classes for a role. */
+
 function roleBadge(r: string) {
     return (
-        (
-            {
-                admin: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
-                dispatcher: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
-                driver: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100',
-                business_manager: 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100',
-            } as Record<string, string>
-        )[r] ?? ''
-    );
+        {
+            admin: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
+            dispatcher: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
+            driver: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100',
+            business_manager: 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-100',
+        } as Record<string, string>
+    )[r] ?? '';
 }
-</script>
 
+onMounted(fetchUsers);
+</script>

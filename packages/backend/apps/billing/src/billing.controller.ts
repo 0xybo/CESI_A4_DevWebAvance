@@ -92,6 +92,14 @@ export class BillingController {
         return this.billingService.listParcels(id);
     }
 
+    @Get('parcels')
+    listAllParcels(
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+        @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number,
+    ) {
+        return this.billingService.listAllParcels(page, limit);
+    }
+
     @Delete('invoices/:id/parcels/:parcelId')
     deleteParcel(@Param('id') id: string, @Param('parcelId') parcelId: string) {
         return this.billingService.deleteParcel(id, parcelId);

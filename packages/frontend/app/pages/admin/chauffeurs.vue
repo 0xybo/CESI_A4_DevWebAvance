@@ -18,7 +18,16 @@
                 </CardContent>
             </Card>
 
-            <Card>
+            <div v-if="loading" class="text-center py-12 text-muted-foreground">
+                <p>Chargement...</p>
+            </div>
+
+            <div v-else-if="error" class="text-center py-12 text-muted-foreground">
+                <p>Erreur : {{ error }}</p>
+                <Button variant="outline" class="mt-4" @click="fetchDrivers">Réessayer</Button>
+            </div>
+
+            <Card v-else>
                 <CardContent class="p-0">
                     <Table>
                         <TableHeader>
@@ -33,14 +42,14 @@
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="d in filtered" :key="d.ref">
+                            <TableRow v-for="d in filtered" :key="d.id">
                                 <TableCell class="font-mono text-xs text-muted-foreground">{{ d.ref }}</TableCell>
                                 <TableCell>
                                     <div class="flex items-center gap-2.5">
                                         <div
                                             class="w-7 h-7 rounded-full bg-green-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                                         >
-                                            {{ d.name.charAt(0) }}
+                                            {{ (d.name || '?').charAt(0) }}
                                         </div>
                                         <span class="font-medium">{{ d.name }}</span>
                                     </div>
@@ -58,8 +67,7 @@
                                                   ? 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100'
                                                   : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100'
                                         "
-                                        >{{ d.status }}</Badge
-                                    >
+                                    >{{ d.status }}</Badge>
                                 </TableCell>
                             </TableRow>
                         </TableBody>
@@ -80,84 +88,56 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search } from '@lucide/vue';
+import type { ApiUser, PaginatedResponse } from '@/composables/useApi';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Chauffeurs — Transvirex' });
 
-/** Search/filter input value. */
+const { get } = useApi();
 const search = ref('');
-/** Static list of chauffeurs for the demo table. */
-const drivers = [
-    {
-        ref: 'DRV-001',
-        name: 'Pierre Martin',
-        email: 'driver@transvirex.com',
-        vehicle: 'Fourgon FO-001',
-        hub: 'Hub Paris Centre',
-        rating: 4.8,
-        status: 'En livraison',
-    },
-    {
-        ref: 'DRV-002',
-        name: 'Marc Dupont',
-        email: 'm.dupont@transvirex.com',
-        vehicle: 'Fourgon FO-002',
-        hub: 'Hub Paris Centre',
-        rating: 4.9,
-        status: 'Disponible',
-    },
-    {
-        ref: 'DRV-003',
-        name: 'Sophie Martin',
-        email: 's.martin@transvirex.com',
-        vehicle: 'Camionnette CM-001',
-        hub: 'Hub Lyon',
-        rating: 4.7,
-        status: 'En livraison',
-    },
-    {
-        ref: 'DRV-004',
-        name: 'Alain Bernard',
-        email: 'a.bernard@transvirex.com',
-        vehicle: 'Fourgon FO-003',
-        hub: 'Hub Bordeaux',
-        rating: 4.6,
-        status: 'Disponible',
-    },
-    {
-        ref: 'DRV-005',
-        name: 'Julie Thomas',
-        email: 'j.thomas@transvirex.com',
-        vehicle: 'Vélo cargo VC-001',
-        hub: 'Hub Paris Centre',
-        rating: 4.5,
-        status: 'Repos',
-    },
-    {
-        ref: 'DRV-006',
-        name: 'Robert Petit',
-        email: 'r.petit@transvirex.com',
-        vehicle: 'Camionnette CM-002',
-        hub: 'Hub Lille',
-        rating: 4.7,
-        status: 'En livraison',
-    },
-    {
-        ref: 'DRV-007',
-        name: 'Claire Leroy',
-        email: 'c.leroy@transvirex.com',
-        vehicle: 'Fourgon FO-004',
-        hub: 'Hub Nantes',
-        rating: 4.8,
-        status: 'Disponible',
-    },
-];
-/** Drivers filtered by the search query. */
+const loading = ref(true);
+const error = ref<string | null>(null);
+const drivers = ref<Array<{
+    id: string;
+    ref: string;
+    name: string;
+    email: string;
+    vehicle: string;
+    hub: string;
+    rating: string;
+    status: string;
+}>>([]);
+
+async function fetchDrivers() {
+    loading.value = true;
+    error.value = null;
+    try {
+        const res = await get<PaginatedResponse<ApiUser>>('/users?role=driver&limit=100');
+        drivers.value = res.data.map((u) => ({
+            id: u.id,
+            ref: u.driver?.reference ?? u.reference,
+            name: [u.firstname, u.lastname].filter(Boolean).join(' ') || u.email || '—',
+            email: u.email ?? '—',
+            vehicle: u.driver?.vehicle
+                ? `${u.driver.vehicle.type ?? ''} ${u.driver.vehicle.reference ?? ''}`.trim()
+                : '—',
+            hub: u.hub?.name ?? '—',
+            rating: u.driver?.rating != null ? u.driver.rating.toFixed(1) : '—',
+            status: u.status === 'active' ? 'Disponible' : u.status === 'inactive' ? 'Repos' : 'Indisponible',
+        }));
+    } catch (e: any) {
+        error.value = e?.message ?? 'Impossible de charger les chauffeurs';
+    } finally {
+        loading.value = false;
+    }
+}
+
 const filtered = computed(() =>
-    drivers.filter(
+    drivers.value.filter(
         (d) =>
             !search.value || Object.values(d).some((v) => String(v).toLowerCase().includes(search.value.toLowerCase())),
     ),
 );
-</script>
 
+onMounted(fetchDrivers);
+</script>
