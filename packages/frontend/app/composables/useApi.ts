@@ -56,6 +56,7 @@ export interface ApiDriver {
         reference: string;
         type: string | null;
         license_plate: string | null;
+        status: string | null;
     } | null;
 }
 
@@ -67,15 +68,32 @@ export interface ApiInvoice {
     due_date: string;
     amount: number;
     status: string;
+    business_manager_id: string;
+    customer_id: string;
+    hub_id: string;
+    pickup_address_id: string;
+    delivery_address_id: string;
+    payment_date: string | null;
     customer: {
         id: string;
         reference: string;
         customer_name: string | null;
+        customer_type: string | null;
+        contact_firstname: string | null;
+        contact_lastname: string | null;
+        phone_number: string | null;
+        email: string | null;
+        status: string | null;
     } | null;
     hub: {
         id: string;
         reference: string;
         name: string | null;
+        manager_id: string | null;
+        address_id: string | null;
+        phone_number: string | null;
+        capacity_parcels_day: number | null;
+        status: string | null;
     } | null;
     business_manager: {
         id: string;
@@ -83,6 +101,12 @@ export interface ApiInvoice {
         firstname: string | null;
         lastname: string | null;
         email: string | null;
+    } | null;
+    delivery_address?: {
+        id?: string;
+        address?: string | null;
+        city?: string | null;
+        postal_code?: string | null;
     } | null;
 }
 
@@ -96,6 +120,24 @@ export interface ApiUser {
     email: string | null;
     status: string;
     role: string;
+    hub: {
+        id: string;
+        reference: string;
+        name: string | null;
+    } | null;
+    driver: {
+        id: string;
+        reference: string;
+        rating: number | null;
+        vehicle_id: string | null;
+        vehicle: {
+            id: string;
+            reference: string;
+            type: string | null;
+            license_plate: string | null;
+            status: string | null;
+        } | null;
+    } | null;
 }
 
 export interface ApiCustomer {
@@ -112,9 +154,75 @@ export interface ApiCustomer {
     active_invoices: number;
 }
 
+export interface ApiHub {
+    id: string;
+    reference: string;
+    manager_id: string | null;
+    address_id: string | null;
+    name: string | null;
+    phone_number: string | null;
+    capacity_parcels_day: number | null;
+    status: string;
+    address: {
+        id: string;
+        address: string | null;
+        street: string | null;
+        city: string | null;
+        postal_code: string | null;
+    } | null;
+    _count: {
+        users: number;
+        vehicles: number;
+        customers: number;
+        invoices: number;
+    };
+}
+
+export interface ApiVehicle {
+    id: string;
+    hub_id: string | null;
+    reference: string;
+    type: string | null;
+    license_plate: string | null;
+    status: string | null;
+    hub: {
+        id: string;
+        reference: string;
+        name: string | null;
+        phone_number: string | null;
+        status: string | null;
+    } | null;
+    drivers: Array<{
+        id: string;
+        reference: string;
+        user: {
+            id: string;
+            firstname: string | null;
+            lastname: string | null;
+            email: string | null;
+        };
+    }>;
+}
+
 export interface ApiParcel {
     id: string;
     invoice_id: string;
     reference: string;
     weight: number;
+    invoice?: {
+        id: string;
+        reference: string;
+        status: string | null;
+        customer: { customer_name: string | null } | null;
+        deliveries: Array<{
+            id: string;
+            reference: string;
+            status: string | null;
+        }>;
+    };
+}
+
+export interface ApiInvoiceDetail extends ApiInvoice {
+    parcels: ApiParcel[];
+    deliveries: ApiDelivery[];
 }

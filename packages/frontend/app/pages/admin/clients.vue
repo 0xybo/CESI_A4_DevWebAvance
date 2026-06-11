@@ -18,7 +18,16 @@
                 </CardContent>
             </Card>
 
-            <Card>
+            <div v-if="loading" class="text-center py-12 text-muted-foreground">
+                <p>Chargement...</p>
+            </div>
+
+            <div v-else-if="error" class="text-center py-12 text-muted-foreground">
+                <p>Erreur : {{ error }}</p>
+                <Button variant="outline" class="mt-4" @click="fetchClients">Réessayer</Button>
+            </div>
+
+            <Card v-else>
                 <CardContent class="p-0">
                     <Table>
                         <TableHeader>
@@ -33,15 +42,13 @@
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="c in filtered" :key="c.ref">
-                                <TableCell class="font-mono text-xs text-muted-foreground">{{ c.ref }}</TableCell>
-                                <TableCell class="font-medium">{{ c.name }}</TableCell>
-                                <TableCell
-                                    ><Badge variant="outline">{{ c.type }}</Badge></TableCell
-                                >
+                            <TableRow v-for="c in filtered" :key="c.id">
+                                <TableCell class="font-mono text-xs text-muted-foreground">{{ c.reference }}</TableCell>
+                                <TableCell class="font-medium">{{ c.customer_name }}</TableCell>
+                                <TableCell><Badge variant="outline">{{ c.customer_type }}</Badge></TableCell>
                                 <TableCell class="text-muted-foreground">{{ c.contact }}</TableCell>
                                 <TableCell class="text-xs text-muted-foreground">{{ c.email }}</TableCell>
-                                <TableCell>{{ c.hub }}</TableCell>
+                                <TableCell>{{ c.hub_name }}</TableCell>
                                 <TableCell>
                                     <Badge
                                         :class="
@@ -56,7 +63,9 @@
                             </TableRow>
                         </TableBody>
                     </Table>
-                    <div class="px-4 py-3 border-t text-xs text-muted-foreground">{{ filtered.length }} client(s)</div>
+                    <div class="px-4 py-3 border-t text-xs text-muted-foreground">
+                        {{ filtered.length }} client(s)
+                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -70,83 +79,53 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search } from '@lucide/vue';
+import type { ApiCustomer } from '@/composables/useApi';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Clients — Transvirex' });
 
-/** Search/filter input value. */
+const { get } = useApi();
 const search = ref('');
-/** Static list of clients for the demo table. */
-const clients = [
-    {
-        ref: 'CLI-001',
-        name: 'Société Durand',
-        type: 'Entreprise',
-        contact: 'Jean Durand',
-        email: 'j.durand@durand.fr',
-        hub: 'Hub Paris Centre',
-        status: 'active',
-    },
-    {
-        ref: 'CLI-002',
-        name: 'SARL Martin',
-        type: 'PME',
-        contact: 'Sophie Martin',
-        email: 's.martin@martin.fr',
-        hub: 'Hub Lyon',
-        status: 'active',
-    },
-    {
-        ref: 'CLI-003',
-        name: 'Express Cargo',
-        type: 'Entreprise',
-        contact: 'Paul Bernard',
-        email: 'p.bernard@cargo.fr',
-        hub: 'Hub Bordeaux',
-        status: 'active',
-    },
-    {
-        ref: 'CLI-004',
-        name: 'TGV Express',
-        type: 'Grand compte',
-        contact: 'Marie Thomas',
-        email: 'm.thomas@tgv.fr',
-        hub: 'Hub Paris Centre',
-        status: 'active',
-    },
-    {
-        ref: 'CLI-005',
-        name: 'Logistics Plus',
-        type: 'Entreprise',
-        contact: 'Robert Petit',
-        email: 'r.petit@logistics.fr',
-        hub: 'Hub Lille',
-        status: 'inactive',
-    },
-    {
-        ref: 'CLI-006',
-        name: 'Nord Fret',
-        type: 'PME',
-        contact: 'Claire Leroy',
-        email: 'c.leroy@nordfret.fr',
-        hub: 'Hub Lille',
-        status: 'active',
-    },
-    {
-        ref: 'CLI-007',
-        name: 'Alsace Trans',
-        type: 'Entreprise',
-        contact: 'Marc Dupont',
-        email: 'm.dupont@alsace.fr',
-        hub: 'Hub Strasbourg',
-        status: 'active',
-    },
-];
-/** Clients filtered by the search query. */
+const loading = ref(true);
+const error = ref<string | null>(null);
+const clients = ref<Array<{
+    id: string;
+    reference: string;
+    customer_name: string;
+    customer_type: string;
+    contact: string;
+    email: string;
+    hub_name: string;
+    status: string;
+}>>([]);
+
+async function fetchClients() {
+    loading.value = true;
+    error.value = null;
+    try {
+        const data = await get<ApiCustomer[]>('/customers');
+        clients.value = data.map((c) => ({
+            id: c.id,
+            reference: c.reference,
+            customer_name: c.customer_name ?? '—',
+            customer_type: c.customer_type ?? '—',
+            contact: [c.contact_firstname, c.contact_lastname].filter(Boolean).join(' ') || '—',
+            email: c.email ?? '—',
+            hub_name: c.hub?.name ?? '—',
+            status: c.status,
+        }));
+    } catch (e: any) {
+        error.value = e?.message ?? 'Impossible de charger les clients';
+    } finally {
+        loading.value = false;
+    }
+}
+
 const filtered = computed(() =>
-    clients.filter(
-        (c) => !search.value || Object.values(c).some((v) => v.toLowerCase().includes(search.value.toLowerCase())),
+    clients.value.filter(
+        (c) => !search.value || Object.values(c).some((v) => String(v).toLowerCase().includes(search.value.toLowerCase())),
     ),
 );
-</script>
 
+onMounted(fetchClients);
+</script>

@@ -396,6 +396,33 @@ export class BillingService {
         }));
     }
 
+    /** List all parcels across all invoices with associated invoice reference. */
+    async listAllParcels(page: number = 1, limit: number = 100) {
+        const [data, total] = await Promise.all([
+            this.prisma.parcel.findMany({
+                skip: (page - 1) * limit,
+                take: limit,
+                include: {
+                    invoice: {
+                        select: {
+                            id: true,
+                            reference: true,
+                            status: true,
+                            customer: { select: { customer_name: true } },
+                            deliveries: {
+                                select: { id: true, reference: true, status: true },
+                            },
+                        },
+                    },
+                },
+                orderBy: { reference: 'asc' },
+            }),
+            this.prisma.parcel.count(),
+        ]);
+
+        return { data, page, limit, total };
+    }
+
     /** Delete an invoice and related data. */
     async remove(id: string) {
         const existing = await this.prisma.invoice.findUnique({ where: { id } });

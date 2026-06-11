@@ -9,8 +9,28 @@
                 <Button><Plus class="w-4 h-4 mr-2" />Nouveau hub</Button>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                <Card v-for="hub in hubs" :key="hub.ref">
+            <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <Card v-for="i in 6" :key="i">
+                    <CardHeader class="pb-3">
+                        <div class="w-10 h-10 rounded-lg bg-muted/50 animate-pulse" />
+                        <div class="h-4 w-32 bg-muted/50 animate-pulse rounded mt-3" />
+                        <div class="h-3 w-24 bg-muted/30 animate-pulse rounded mt-1" />
+                    </CardHeader>
+                    <CardContent>
+                        <div class="space-y-2">
+                            <div v-for="j in 4" :key="j" class="h-3 bg-muted/30 animate-pulse rounded" />
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            <div v-else-if="error" class="text-center py-12 text-muted-foreground">
+                <p>Erreur : {{ error }}</p>
+                <Button variant="outline" class="mt-4" @click="fetchHubs">Réessayer</Button>
+            </div>
+
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                <Card v-for="hub in hubs" :key="hub.id">
                     <CardHeader class="pb-3">
                         <div class="flex items-start justify-between">
                             <div
@@ -29,22 +49,25 @@
                             </Badge>
                         </div>
                         <CardTitle class="text-sm mt-3">{{ hub.name }}</CardTitle>
-                        <CardDescription class="font-mono text-xs">{{ hub.ref }}</CardDescription>
+                        <CardDescription class="font-mono text-xs">{{ hub.reference }}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div class="space-y-1.5 text-xs">
                             <div class="flex justify-between">
-                                <span class="text-muted-foreground">Adresse</span><span>{{ hub.address }}</span>
+                                <span class="text-muted-foreground">Adresse</span>
+                                <span>{{ hub.address }}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-muted-foreground">Capacité/jour</span
-                                ><span class="font-semibold">{{ hub.capacity }} colis</span>
+                                <span class="text-muted-foreground">Capacité/jour</span>
+                                <span class="font-semibold">{{ hub.capacity }} colis</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-muted-foreground">Chauffeurs</span><span>{{ hub.drivers }}</span>
+                                <span class="text-muted-foreground">Chauffeurs</span>
+                                <span>{{ hub.drivers }}</span>
                             </div>
                             <div class="flex justify-between">
-                                <span class="text-muted-foreground">Téléphone</span><span>{{ hub.phone }}</span>
+                                <span class="text-muted-foreground">Téléphone</span>
+                                <span>{{ hub.phone }}</span>
                             </div>
                         </div>
                     </CardContent>
@@ -59,66 +82,46 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2, Plus } from '@lucide/vue';
+import type { ApiHub } from '@/composables/useApi';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Hubs — Transvirex' });
 
-/** Static list of distribution hubs. */
-const hubs = [
-    {
-        ref: 'HUB-001',
-        name: 'Hub Paris Centre',
-        address: '1 Rue de la Logistique, Paris',
-        capacity: 500,
-        drivers: 12,
-        phone: '01 23 45 67 89',
-        status: 'active',
-    },
-    {
-        ref: 'HUB-002',
-        name: 'Hub Lyon',
-        address: '15 Av. de la République, Lyon',
-        capacity: 350,
-        drivers: 8,
-        phone: '04 56 78 90 12',
-        status: 'active',
-    },
-    {
-        ref: 'HUB-003',
-        name: 'Hub Bordeaux',
-        address: '8 Rue du Commerce, Bordeaux',
-        capacity: 280,
-        drivers: 6,
-        phone: '05 67 89 01 23',
-        status: 'active',
-    },
-    {
-        ref: 'HUB-004',
-        name: 'Hub Lille',
-        address: '22 Bd de la Paix, Lille',
-        capacity: 200,
-        drivers: 5,
-        phone: '03 78 90 12 34',
-        status: 'active',
-    },
-    {
-        ref: 'HUB-005',
-        name: 'Hub Nantes',
-        address: '5 Quai de la Loire, Nantes',
-        capacity: 180,
-        drivers: 4,
-        phone: '02 89 01 23 45',
-        status: 'active',
-    },
-    {
-        ref: 'HUB-006',
-        name: 'Hub Strasbourg',
-        address: '10 Rue du Rhin, Strasbourg',
-        capacity: 150,
-        drivers: 3,
-        phone: '03 90 12 34 56',
-        status: 'inactive',
-    },
-];
-</script>
+const { get } = useApi();
+const loading = ref(true);
+const error = ref<string | null>(null);
+const hubs = ref<Array<{
+    id: string;
+    reference: string;
+    name: string;
+    address: string;
+    capacity: number;
+    drivers: number;
+    phone: string;
+    status: string;
+}>>([]);
 
+async function fetchHubs() {
+    loading.value = true;
+    error.value = null;
+    try {
+        const data = await get<ApiHub[]>('/hubs');
+        hubs.value = data.map((h) => ({
+            id: h.id,
+            reference: h.reference,
+            name: h.name ?? '',
+            address: [h.address?.address, h.address?.postal_code, h.address?.city].filter(Boolean).join(', ') || '—',
+            capacity: h.capacity_parcels_day ?? 0,
+            drivers: h._count.users,
+            phone: h.phone_number ?? '—',
+            status: h.status ?? 'inactive',
+        }));
+    } catch (e: any) {
+        error.value = e?.message ?? 'Impossible de charger les hubs';
+    } finally {
+        loading.value = false;
+    }
+}
+
+onMounted(fetchHubs);
+</script>

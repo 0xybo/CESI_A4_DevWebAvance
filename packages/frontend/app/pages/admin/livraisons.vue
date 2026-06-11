@@ -27,7 +27,16 @@
                 </CardContent>
             </Card>
 
-            <Card>
+            <div v-if="loading" class="text-center py-12 text-muted-foreground">
+                <p>Chargement...</p>
+            </div>
+
+            <div v-else-if="error" class="text-center py-12 text-muted-foreground">
+                <p>Erreur : {{ error }}</p>
+                <Button variant="outline" class="mt-4" @click="fetchDeliveries">Réessayer</Button>
+            </div>
+
+            <Card v-else>
                 <CardContent class="p-0">
                     <Table>
                         <TableHeader>
@@ -42,17 +51,13 @@
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="d in filtered" :key="d.ref">
+                            <TableRow v-for="d in filtered" :key="d.id">
                                 <TableCell class="font-mono text-xs text-muted-foreground">{{ d.ref }}</TableCell>
                                 <TableCell class="font-medium">{{ d.client }}</TableCell>
                                 <TableCell>{{ d.destination }}</TableCell>
                                 <TableCell class="text-muted-foreground">{{ d.driver }}</TableCell>
-                                <TableCell
-                                    ><Badge :class="priorityClass(d.priority)">{{ d.priority }}</Badge></TableCell
-                                >
-                                <TableCell
-                                    ><Badge :class="statusClass(d.status)">{{ d.status }}</Badge></TableCell
-                                >
+                                <TableCell><Badge :class="priorityClass(d.priority)">{{ d.priority }}</Badge></TableCell>
+                                <TableCell><Badge :class="statusClass(d.status)">{{ d.status }}</Badge></TableCell>
                                 <TableCell class="text-muted-foreground text-xs">{{ d.date }}</TableCell>
                             </TableRow>
                         </TableBody>
@@ -73,128 +78,101 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search } from '@lucide/vue';
+import type { ApiDelivery, PaginatedResponse } from '@/composables/useApi';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Livraisons — Transvirex' });
 
-/** Search/filter input value. */
+const { get } = useApi();
 const search = ref('');
-/** Selected status filter. */
 const filterStatus = ref('');
-/** Available delivery status options. */
-const statuses = ['Livré', 'En cours', 'En attente', 'Retardé', 'Annulé'];
+const loading = ref(true);
+const error = ref<string | null>(null);
+const deliveries = ref<Array<{
+    id: string;
+    ref: string;
+    client: string;
+    destination: string;
+    driver: string;
+    priority: string;
+    status: string;
+    date: string;
+}>>([]);
 
-/** Static list of deliveries for the demo table. */
-const deliveries = [
-    {
-        ref: '#LIV-0091',
-        client: 'Société Durand',
-        destination: 'Paris 15e',
-        driver: 'M. Dupont',
-        priority: 'Standard',
-        status: 'Livré',
-        date: '09/06/2026',
-    },
-    {
-        ref: '#LIV-0092',
-        client: 'SARL Martin',
-        destination: 'Lyon Part-Dieu',
-        driver: 'S. Martin',
-        priority: 'High',
-        status: 'En cours',
-        date: '09/06/2026',
-    },
-    {
-        ref: '#LIV-0093',
-        client: 'Express Cargo',
-        destination: 'Bordeaux Centre',
-        driver: 'A. Bernard',
-        priority: 'Standard',
-        status: 'En attente',
-        date: '09/06/2026',
-    },
-    {
-        ref: '#LIV-0094',
-        client: 'TGV Express',
-        destination: 'Marseille 13e',
-        driver: 'J. Thomas',
-        priority: 'Urgent',
-        status: 'Livré',
-        date: '09/06/2026',
-    },
-    {
-        ref: '#LIV-0095',
-        client: 'Logistics Plus',
-        destination: 'Lille Centre',
-        driver: 'R. Petit',
-        priority: 'High',
-        status: 'En cours',
-        date: '09/06/2026',
-    },
-    {
-        ref: '#LIV-0096',
-        client: 'Nord Fret',
-        destination: 'Nantes Ouest',
-        driver: 'C. Leroy',
-        priority: 'Standard',
-        status: 'Retardé',
-        date: '09/06/2026',
-    },
-    {
-        ref: '#LIV-0097',
-        client: 'Alsace Trans',
-        destination: 'Strasbourg',
-        driver: 'M. Dupont',
-        priority: 'Low',
-        status: 'Livré',
-        date: '08/06/2026',
-    },
-    {
-        ref: '#LIV-0099',
-        client: 'Sud Logistics',
-        destination: 'Toulouse',
-        driver: 'A. Bernard',
-        priority: 'Urgent',
-        status: 'Annulé',
-        date: '08/06/2026',
-    },
-];
+const statusLabels: Record<string, string> = {
+    delivered: 'Livré',
+    planned: 'En attente',
+    delivering: 'En cours',
+    cancelled: 'Annulé',
+    blocked: 'Bloqué',
+    delayed: 'Retardé',
+};
 
-/** Deliveries filtered by search and status. */
+const statuses = Object.values(statusLabels);
+
+async function fetchDeliveries() {
+    loading.value = true;
+    error.value = null;
+    try {
+        const res = await get<PaginatedResponse<ApiDelivery>>('/deliveries?limit=100');
+        deliveries.value = res.data.map((d) => ({
+            id: d.id,
+            ref: d.reference,
+            client: d.invoice?.customer?.customer_name ?? '—',
+            destination: d.invoice?.delivery_address
+                ? [d.invoice.delivery_address.address, d.invoice.delivery_address.postal_code, d.invoice.delivery_address.city]
+                      .filter(Boolean)
+                      .join(', ')
+                : '—',
+            driver: d.driver
+                ? [d.driver.user.firstname, d.driver.user.lastname].filter(Boolean).join(' ')
+                : '—',
+            priority: d.invoice?.priority ?? 'standard',
+            status: statusLabels[d.status] ?? d.status,
+            date: d.invoice?.due_date ? new Date(d.invoice.due_date).toLocaleDateString('fr-FR') : '—',
+        }));
+    } catch (e: any) {
+        error.value = e?.message ?? 'Impossible de charger les livraisons';
+    } finally {
+        loading.value = false;
+    }
+}
+
 const filtered = computed(() =>
-    deliveries.filter(
+    deliveries.value.filter(
         (d) =>
             (filterStatus.value === '' || d.status === filterStatus.value) &&
-            (search.value === '' || Object.values(d).some((v) => v.toLowerCase().includes(search.value.toLowerCase()))),
+            (search.value === '' || Object.values(d).some((v) => String(v).toLowerCase().includes(search.value.toLowerCase()))),
     ),
 );
 
-/** Return Tailwind badge classes for a delivery status. */
 function statusClass(s: string) {
     return (
-        (
-            {
-                Livré: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100',
-                'En cours': 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
-                'En attente': 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
-                Retardé: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
-                Annulé: 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
-            } as Record<string, string>
-        )[s] ?? ''
-    );
+        {
+            Livré: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100',
+            'En cours': 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
+            'En attente': 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+            Retardé: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
+            Bloqué: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100',
+            Annulé: 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
+        } as Record<string, string>
+    )[s] ?? '';
 }
-/** Return Tailwind badge classes for a priority level. */
+
 function priorityClass(p: string) {
     return (
-        (
-            {
-                Urgent: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
-                High: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100',
-                Standard: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
-                Low: 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
-            } as Record<string, string>
-        )[p] ?? ''
-    );
+        {
+            urgent: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
+            Urgent: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
+            high: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100',
+            High: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100',
+            standard: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
+            Standard: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
+            low: 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
+            Low: 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
+        } as Record<string, string>
+    )[p] ?? '';
 }
-</script>
 
+onMounted(fetchDeliveries);
+</script>

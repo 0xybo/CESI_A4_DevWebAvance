@@ -21,6 +21,20 @@ const userSelect = {
     work_email: true,
     status: true,
     role: true,
+    hub: {
+        select: { id: true, reference: true, name: true },
+    },
+    driver: {
+        select: {
+            id: true,
+            reference: true,
+            rating: true,
+            vehicle_id: true,
+            vehicle: {
+                select: { id: true, reference: true, type: true, license_plate: true, status: true },
+            },
+        },
+    },
 } as const;
 
 /** Service handling user-related business logic. */

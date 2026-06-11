@@ -127,7 +127,8 @@ export const VehicleScalarFieldEnum = {
   hub_id: 'hub_id',
   reference: 'reference',
   type: 'type',
-  license_plate: 'license_plate'
+  license_plate: 'license_plate',
+  status: 'status'
 } as const
 
 export type VehicleScalarFieldEnum = (typeof VehicleScalarFieldEnum)[keyof typeof VehicleScalarFieldEnum]

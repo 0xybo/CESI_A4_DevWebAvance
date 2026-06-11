@@ -27,7 +27,16 @@
                 </CardContent>
             </Card>
 
-            <Card>
+            <div v-if="loading" class="text-center py-12 text-muted-foreground">
+                <p>Chargement...</p>
+            </div>
+
+            <div v-else-if="error" class="text-center py-12 text-muted-foreground">
+                <p>Erreur : {{ error }}</p>
+                <Button variant="outline" class="mt-4" @click="fetchInvoices">Réessayer</Button>
+            </div>
+
+            <Card v-else>
                 <CardContent class="p-0">
                     <Table>
                         <TableHeader>
@@ -43,18 +52,14 @@
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="f in filtered" :key="f.ref">
+                            <TableRow v-for="f in filtered" :key="f.id">
                                 <TableCell class="font-mono text-xs text-muted-foreground">{{ f.ref }}</TableCell>
                                 <TableCell class="font-medium">{{ f.client }}</TableCell>
                                 <TableCell>{{ f.service }}</TableCell>
-                                <TableCell
-                                    ><Badge :class="priorityClass(f.priority)">{{ f.priority }}</Badge></TableCell
-                                >
+                                <TableCell><Badge :class="priorityClass(f.priority)">{{ f.priority }}</Badge></TableCell>
                                 <TableCell class="font-semibold">{{ f.amount }}</TableCell>
                                 <TableCell class="text-muted-foreground text-xs">{{ f.due }}</TableCell>
-                                <TableCell
-                                    ><Badge :class="statusClass(f.status)">{{ f.status }}</Badge></TableCell
-                                >
+                                <TableCell><Badge :class="statusClass(f.status)">{{ f.status }}</Badge></TableCell>
                                 <TableCell class="text-right">
                                     <Button
                                         variant="ghost"
@@ -88,85 +93,61 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { exportFacturePdf, type FactureData } from '@/composables/usePdfExport';
 import { FileDown, Loader2, Plus, Search } from '@lucide/vue';
+import type { ApiInvoice, PaginatedResponse } from '@/composables/useApi';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Factures — Transvirex' });
 
-/** Search/filter input value. */
+const { get } = useApi();
 const search = ref('');
-/** Selected document-type filter. */
 const filterStatus = ref('');
-/** Ref of the invoice currently being exported (shows spinner). */
 const exporting = ref<string | null>(null);
+const loading = ref(true);
+const error = ref<string | null>(null);
+const invoices = ref<Array<FactureData & { id: string }>>([]);
 
-/** Static list of invoices for the demo table. */
-const invoices: FactureData[] = [
-    {
-        ref: 'FAC-2026-001',
-        client: 'Société Durand',
-        service: 'Express',
-        priority: 'Urgent',
-        amount: '€ 1 250',
-        due: '15/06/2026',
-        status: 'Facture',
-    },
-    {
-        ref: 'FAC-2026-002',
-        client: 'SARL Martin',
-        service: 'Standard',
-        priority: 'Standard',
-        amount: '€ 480',
-        due: '20/06/2026',
-        status: 'Bon de commande',
-    },
-    {
-        ref: 'FAC-2026-003',
-        client: 'Express Cargo',
-        service: 'Fret',
-        priority: 'High',
-        amount: '€ 3 400',
-        due: '30/06/2026',
-        status: 'Devis',
-    },
-    {
-        ref: 'FAC-2026-004',
-        client: 'TGV Express',
-        service: 'Express',
-        priority: 'Urgent',
-        amount: '€ 890',
-        due: '10/06/2026',
-        status: 'Facture',
-    },
-    {
-        ref: 'FAC-2026-005',
-        client: 'Logistics Plus',
-        service: 'Standard',
-        priority: 'Low',
-        amount: '€ 210',
-        due: '25/06/2026',
-        status: 'Devis',
-    },
-    {
-        ref: 'FAC-2026-006',
-        client: 'Nord Fret',
-        service: 'Fret',
-        priority: 'Standard',
-        amount: '€ 2 100',
-        due: '18/06/2026',
-        status: 'Bon de commande',
-    },
-];
+const statusMap: Record<string, string> = {
+    quotation: 'Devis',
+    purchase_order: 'Bon de commande',
+    invoice: 'Facture',
+};
 
-/** Invoices filtered by search query and document type. */
+const serviceLabels: Record<string, string> = {
+    express: 'Express',
+    standard: 'Standard',
+    freight: 'Fret',
+};
+
+async function fetchInvoices() {
+    loading.value = true;
+    error.value = null;
+    try {
+        const res = await get<PaginatedResponse<ApiInvoice>>('/invoices?limit=100');
+        invoices.value = res.data.map((inv) => ({
+            id: inv.id,
+            ref: inv.reference,
+            client: inv.customer?.customer_name ?? '—',
+            service: serviceLabels[inv.service_type ?? ''] ?? inv.service_type ?? '—',
+            priority: inv.priority.charAt(0).toUpperCase() + inv.priority.slice(1),
+            amount: `€ ${inv.amount.toLocaleString('fr-FR')}`,
+            due: new Date(inv.due_date).toLocaleDateString('fr-FR'),
+            status: statusMap[inv.status] ?? inv.status,
+        }));
+    } catch (e: any) {
+        error.value = e?.message ?? 'Impossible de charger les factures';
+    } finally {
+        loading.value = false;
+    }
+}
+
 const filtered = computed(() =>
-    invoices.filter(
+    invoices.value.filter(
         (f) =>
             (filterStatus.value === '' || f.status === filterStatus.value) &&
-            (!search.value || Object.values(f).some((v) => v.toLowerCase().includes(search.value.toLowerCase()))),
+            (!search.value || Object.values(f).some((v) => String(v).toLowerCase().includes(search.value.toLowerCase()))),
     ),
 );
 
-/** Export an invoice as PDF. */
 async function download(f: FactureData) {
     exporting.value = f.ref;
     try {
@@ -176,30 +157,26 @@ async function download(f: FactureData) {
     }
 }
 
-/** Return Tailwind badge classes for a document status. */
 function statusClass(s: string) {
     return (
-        (
-            {
-                Facture: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100',
-                'Bon de commande': 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
-                Devis: 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
-            } as Record<string, string>
-        )[s] ?? ''
-    );
+        {
+            Facture: 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100',
+            'Bon de commande': 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
+            Devis: 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+        } as Record<string, string>
+    )[s] ?? '';
 }
-/** Return Tailwind badge classes for a priority level. */
+
 function priorityClass(p: string) {
     return (
-        (
-            {
-                Urgent: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
-                High: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100',
-                Standard: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
-                Low: 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
-            } as Record<string, string>
-        )[p] ?? ''
-    );
+        {
+            Urgent: 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100',
+            High: 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-100',
+            Standard: 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100',
+            Low: 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
+        } as Record<string, string>
+    )[p] ?? '';
 }
-</script>
 
+onMounted(fetchInvoices);
+</script>

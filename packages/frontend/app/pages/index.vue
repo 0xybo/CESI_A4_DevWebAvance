@@ -51,7 +51,7 @@
                                 v-model="email"
                                 type="email"
                                 required
-                                :placeholder="`${selectedRole}@transvirex.com`"
+                                :placeholder="`utilisateur@transvirex.com`"
                             />
                         </div>
                         <div class="space-y-1.5">

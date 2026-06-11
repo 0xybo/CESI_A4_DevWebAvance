@@ -130,6 +130,7 @@ model Vehicle {
     reference     String
     type          String?
     license_plate String?
+    status        String? @default("available")
 
     hub     Hub?     @relation(fields: [hub_id], references: [id])
     drivers Driver[]

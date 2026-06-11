@@ -1,6 +1,6 @@
 import { Roles } from '@app/guards/roles.decorator';
-import { Body, Controller, Delete, Get, Param, Post, Req } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Post, Query, Req } from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { CreateParcelDto } from '../dto/create-parcel.dto';
 import { GatewayService } from '../gateway.service';
@@ -8,6 +8,22 @@ import { GatewayService } from '../gateway.service';
 @Controller()
 export class InvoicesController {
     constructor(private readonly gatewayService: GatewayService) {}
+
+    @ApiTags('Parcels')
+    @Get('parcels')
+    @ApiBearerAuth('JWT-auth')
+    @Roles('admin', 'dispatcher')
+    @ApiOperation({ summary: 'List all parcels', description: 'Returns a paginated list of all parcels.' })
+    @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+    @ApiQuery({ name: 'limit', required: false, type: Number, example: 100 })
+    @ApiResponse({ status: 200, description: 'Paginated list of parcels' })
+    listAllParcels(
+        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+        @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number,
+        @Req() req: Request,
+    ) {
+        return this.gatewayService.listAllParcels(page, limit, (req as any).user);
+    }
 
     @ApiTags('Invoices')
     @Post('invoices/:id/parcels')
