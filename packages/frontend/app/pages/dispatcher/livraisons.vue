@@ -297,7 +297,7 @@ const driverOptions = computed(() =>
     drivers.value
         .filter((d) => d.status === 'active')
         .map((d) => ({
-            id: d.id,
+            id: d.driver?.id ?? d.id,
             name: `${d.firstname ?? ''} ${d.lastname ?? ''}`.trim() || d.email || '',
             initials: ((d.firstname?.[0] ?? '') + (d.lastname?.[0] ?? '')).toUpperCase() || '?',
             email: d.email ?? '',
