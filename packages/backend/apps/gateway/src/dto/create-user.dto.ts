@@ -48,7 +48,7 @@ export class CreateUserDto {
     @IsString()
     work_phone_number?: string;
 
-    @ApiPropertyOptional({ description: 'Email address', example: 'jane.doe@transvirex.fr' })
+    @ApiPropertyOptional({ description: 'Email address', example: 'jane.doe@transvirex.com' })
     @IsOptional()
     @IsEmail()
     email?: string;
@@ -78,3 +78,4 @@ export class CreateUserDto {
     @IsEnum(UserRoleDto)
     role?: UserRoleDto;
 }
+

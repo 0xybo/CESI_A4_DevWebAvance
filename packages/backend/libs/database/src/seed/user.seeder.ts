@@ -13,15 +13,15 @@ interface StaticUser {
 
 /** Predetermined users inserted on every seed. */
 const STATIC_USERS: StaticUser[] = [
-    { firstname: 'Admin', lastname: 'Transvirex', email: 'admin@transvirex.fr', role: 'admin', password: 'Admin123!' },
+    { firstname: 'Admin', lastname: 'Transvirex', email: 'admin@transvirex.com', role: 'admin', password: 'Admin123!' },
     {
         firstname: 'Jean',
         lastname: 'Dupont',
-        email: 'dispatcher@transvirex.fr',
+        email: 'dispatcher@transvirex.com',
         role: 'dispatcher',
         password: 'Dispatcher123!',
     },
-    { firstname: 'Pierre', lastname: 'Martin', email: 'driver@transvirex.fr', role: 'driver', password: 'Driver123!' },
+    { firstname: 'Pierre', lastname: 'Martin', email: 'driver@transvirex.com', role: 'driver', password: 'Driver123!' },
 ];
 
 /** Shape of a user seed result. */

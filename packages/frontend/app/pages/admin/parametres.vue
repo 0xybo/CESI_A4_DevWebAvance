@@ -15,7 +15,7 @@
                     </div>
                     <div class="space-y-1.5">
                         <Label for="company-email">Email de contact</Label>
-                        <Input id="company-email" type="email" default-value="contact@transvirex.fr" />
+                        <Input id="company-email" type="email" default-value="contact@transvirex.com" />
                     </div>
                     <div class="space-y-1.5">
                         <Label for="company-phone">Téléphone</Label>
