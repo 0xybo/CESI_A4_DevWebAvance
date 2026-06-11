@@ -49,7 +49,7 @@
                         </div>
                         <div class="space-y-1.5">
                             <Label for="email">Email</Label>
-                            <Input id="email" type="email" default-value="driver@transvirex.fr" />
+                            <Input id="email" type="email" default-value="driver@transvirex.com" />
                         </div>
                         <div class="space-y-1.5">
                             <Label for="phone">Téléphone</Label>

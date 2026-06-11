@@ -91,7 +91,7 @@ const drivers = [
     {
         ref: 'DRV-001',
         name: 'Pierre Martin',
-        email: 'driver@transvirex.fr',
+        email: 'driver@transvirex.com',
         vehicle: 'Fourgon FO-001',
         hub: 'Hub Paris Centre',
         rating: 4.8,
@@ -100,7 +100,7 @@ const drivers = [
     {
         ref: 'DRV-002',
         name: 'Marc Dupont',
-        email: 'm.dupont@transvirex.fr',
+        email: 'm.dupont@transvirex.com',
         vehicle: 'Fourgon FO-002',
         hub: 'Hub Paris Centre',
         rating: 4.9,
@@ -109,7 +109,7 @@ const drivers = [
     {
         ref: 'DRV-003',
         name: 'Sophie Martin',
-        email: 's.martin@transvirex.fr',
+        email: 's.martin@transvirex.com',
         vehicle: 'Camionnette CM-001',
         hub: 'Hub Lyon',
         rating: 4.7,
@@ -118,7 +118,7 @@ const drivers = [
     {
         ref: 'DRV-004',
         name: 'Alain Bernard',
-        email: 'a.bernard@transvirex.fr',
+        email: 'a.bernard@transvirex.com',
         vehicle: 'Fourgon FO-003',
         hub: 'Hub Bordeaux',
         rating: 4.6,
@@ -127,7 +127,7 @@ const drivers = [
     {
         ref: 'DRV-005',
         name: 'Julie Thomas',
-        email: 'j.thomas@transvirex.fr',
+        email: 'j.thomas@transvirex.com',
         vehicle: 'Vélo cargo VC-001',
         hub: 'Hub Paris Centre',
         rating: 4.5,
@@ -136,7 +136,7 @@ const drivers = [
     {
         ref: 'DRV-006',
         name: 'Robert Petit',
-        email: 'r.petit@transvirex.fr',
+        email: 'r.petit@transvirex.com',
         vehicle: 'Camionnette CM-002',
         hub: 'Hub Lille',
         rating: 4.7,
@@ -145,7 +145,7 @@ const drivers = [
     {
         ref: 'DRV-007',
         name: 'Claire Leroy',
-        email: 'c.leroy@transvirex.fr',
+        email: 'c.leroy@transvirex.com',
         vehicle: 'Fourgon FO-004',
         hub: 'Hub Nantes',
         rating: 4.8,

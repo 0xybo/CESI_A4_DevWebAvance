@@ -103,7 +103,7 @@ const users = [
     {
         ref: 'USR-001',
         name: 'Admin Transvirex',
-        email: 'admin@transvirex.fr',
+        email: 'admin@transvirex.com',
         role: 'admin',
         hub: 'Hub Paris Centre',
         status: 'active',
@@ -111,7 +111,7 @@ const users = [
     {
         ref: 'USR-002',
         name: 'Jean Dupont',
-        email: 'dispatcher@transvirex.fr',
+        email: 'dispatcher@transvirex.com',
         role: 'dispatcher',
         hub: 'Hub Paris Centre',
         status: 'active',
@@ -119,7 +119,7 @@ const users = [
     {
         ref: 'USR-003',
         name: 'Pierre Martin',
-        email: 'driver@transvirex.fr',
+        email: 'driver@transvirex.com',
         role: 'driver',
         hub: 'Hub Paris Centre',
         status: 'active',
@@ -127,7 +127,7 @@ const users = [
     {
         ref: 'USR-004',
         name: 'Sophie Bernard',
-        email: 's.bernard@transvirex.fr',
+        email: 's.bernard@transvirex.com',
         role: 'business_manager',
         hub: 'Hub Lyon',
         status: 'active',
@@ -135,7 +135,7 @@ const users = [
     {
         ref: 'USR-005',
         name: 'Marc Leroy',
-        email: 'm.leroy@transvirex.fr',
+        email: 'm.leroy@transvirex.com',
         role: 'dispatcher',
         hub: 'Hub Bordeaux',
         status: 'inactive',
@@ -143,7 +143,7 @@ const users = [
     {
         ref: 'USR-006',
         name: 'Claire Thomas',
-        email: 'c.thomas@transvirex.fr',
+        email: 'c.thomas@transvirex.com',
         role: 'driver',
         hub: 'Hub Lyon',
         status: 'active',

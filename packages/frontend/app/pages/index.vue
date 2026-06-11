@@ -43,20 +43,6 @@
                     <CardDescription>Accédez à votre espace Transvirex</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div class="flex gap-2 mb-6">
-                        <Button
-                            v-for="role in roles"
-                            :key="role.value"
-                            type="button"
-                            :variant="selectedRole === role.value ? 'default' : 'outline'"
-                            size="sm"
-                            class="rounded-full"
-                            @click="selectedRole = role.value"
-                        >
-                            {{ role.label }}
-                        </Button>
-                    </div>
-
                     <form @submit.prevent="handleSubmit" class="space-y-4">
                         <div class="space-y-1.5">
                             <Label for="email">Email</Label>
@@ -65,7 +51,7 @@
                                 v-model="email"
                                 type="email"
                                 required
-                                :placeholder="`${selectedRole}@transvirex.fr`"
+                                :placeholder="`${selectedRole}@transvirex.com`"
                             />
                         </div>
                         <div class="space-y-1.5">
@@ -121,14 +107,6 @@ definePageMeta({ layout: false });
 
 const { login } = useAuth();
 
-/** Available role options for the login form. */
-const roles = [
-    { label: 'Dispatcher', value: 'dispatcher' },
-    { label: 'Chauffeur', value: 'driver' },
-    { label: 'Admin', value: 'admin' },
-];
-/** Currently selected role in the login form. */
-const selectedRole = ref('dispatcher');
 /** Email input value. */
 const email = ref('');
 /** Password input value. */
@@ -182,3 +160,4 @@ async function handleSubmit() {
     }
 }
 </script>
+

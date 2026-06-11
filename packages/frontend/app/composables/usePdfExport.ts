@@ -49,7 +49,7 @@ function header(doc: any, title: string, subtitle: string) {
 
     // Contact line
     doc.setFontSize(6.5);
-    doc.text('12 Rue de la Logistique — 75001 Paris  ·  contact@transvirex.fr  ·  +33 1 23 45 67 89', 14, 28);
+    doc.text('12 Rue de la Logistique — 75001 Paris  ·  contact@transvirex.com  ·  +33 1 23 45 67 89', 14, 28);
 
     // Right: document type
     doc.setFont('helvetica', 'bold');
@@ -405,7 +405,7 @@ export async function exportFacturePdf(f: FactureData) {
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
     doc.setTextColor(...Mt);
-    doc.text('Règlement litige : Tribunal de Commerce de Paris — www.transvirex.fr/cgu', 19, noteY + 11);
+    doc.text('Règlement litige : Tribunal de Commerce de Paris — www.transvirex.com/cgu', 19, noteY + 11);
 
     footer(doc);
     doc.save(`${f.ref}.pdf`);

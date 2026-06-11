@@ -27,9 +27,9 @@ async function main() {
         console.log(`  ${result.invoices} invoices`);
         console.log(`  ${result.deliveries} deliveries`);
         console.log('');
-        console.log('  admin@transvirex.fr       / Admin123!');
-        console.log('  dispatcher@transvirex.fr  / Dispatcher123!');
-        console.log('  driver@transvirex.fr      / Driver123!');
+        console.log('  admin@transvirex.com       / Admin123!');
+        console.log('  dispatcher@transvirex.com  / Dispatcher123!');
+        console.log('  driver@transvirex.com      / Driver123!');
     } catch (e: any) {
         if ((e as Error).message === 'Database already seeded') {
             console.log('DB already seeded, skipping.');
