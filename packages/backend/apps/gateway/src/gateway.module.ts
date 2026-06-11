@@ -11,11 +11,16 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../../libs/guards/src/jwt-auth.guard';
 import { AiController } from './controllers/ai.controller';
 import { AuthController } from './controllers/auth.controller';
+import { BillingController } from './controllers/billing.controller';
+import { CustomersController } from './controllers/customers.controller';
 import { DebugController } from './controllers/debug.controller';
+import { DeliveriesController } from './controllers/deliveries.controller';
 import { HealthController } from './controllers/health.controller';
 import { HubsController } from './controllers/hubs.controller';
+import { InvoicesController } from './controllers/invoices.controller';
 import { LoggingController } from './controllers/logging.controller';
 import { UsersController } from './controllers/users.controller';
+import { VehiclesController } from './controllers/vehicles.controller';
 import { GatewayController } from './gateway.controller';
 import { GatewayService } from './gateway.service';
 
@@ -37,9 +42,13 @@ import { GatewayService } from './gateway.service';
         AuthController,
         AiController,
         DebugController,
+        DeliveriesController,
         HubsController,
         LoggingController,
         UsersController,
+        VehiclesController,
+        HubsController,
+        InvoicesController,
     ],
     providers: [
         GatewayService,

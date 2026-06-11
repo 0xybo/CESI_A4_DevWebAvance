@@ -19,7 +19,7 @@ spec:
                 - name: ghcr-secret
             containers:
                 - name: frontend
-                  image: ghcr.io/alecfoucher/transvirex-frontend:latest
+                  image: ghcr.io/cesi-a4-advanced-web/transvirex-frontend:latest
                   imagePullPolicy: Always
                   env:
                       - name: NODE_ENV
