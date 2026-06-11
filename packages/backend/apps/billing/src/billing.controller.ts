@@ -67,6 +67,26 @@ export class BillingController {
         return this.billingService.listCustomers(hub_id);
     }
 
+    @Get('customers/:id')
+    getCustomer(@Param('id') id: string) {
+        return this.billingService.getCustomer(id);
+    }
+
+    @Post('customers')
+    createCustomer(@Body() body: Record<string, any>) {
+        return this.billingService.createCustomer(body);
+    }
+
+    @Patch('customers/:id')
+    updateCustomer(@Param('id') id: string, @Body() body: Record<string, any>) {
+        return this.billingService.updateCustomer(id, body);
+    }
+
+    @Delete('customers/:id')
+    deleteCustomer(@Param('id') id: string) {
+        return this.billingService.deleteCustomer(id);
+    }
+
     @Patch('invoices/:id')
     update(@Param('id') id: string, @Body() body: UpdateInvoiceDto) {
         return this.billingService.update(id, body);
@@ -98,6 +118,16 @@ export class BillingController {
         @Query('limit', new DefaultValuePipe(100), ParseIntPipe) limit: number,
     ) {
         return this.billingService.listAllParcels(page, limit);
+    }
+
+    @Get('parcels/:id')
+    getParcel(@Param('id') id: string) {
+        return this.billingService.getParcel(id);
+    }
+
+    @Patch('parcels/:id')
+    updateParcel(@Param('id') id: string, @Body() body: { weight?: number; reference?: string }) {
+        return this.billingService.updateParcel(id, body);
     }
 
     @Delete('invoices/:id/parcels/:parcelId')

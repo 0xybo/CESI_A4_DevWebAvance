@@ -3,7 +3,7 @@
         <!-- Mobile backdrop -->
         <div
             v-if="mobileSidebarOpen"
-            class="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+            class="fixed inset-0 z-9999 bg-black/40 backdrop-blur-sm lg:hidden"
             @click="mobileSidebarOpen = false"
         />
 
@@ -13,7 +13,7 @@
             :class="[
                 collapsed ? 'w-16' : 'w-64',
                 'fixed inset-y-0 left-0 lg:static lg:inset-auto',
-                mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+                mobileSidebarOpen ? 'translate-x-0 z-10000' : '-translate-x-full lg:translate-x-0',
             ]"
         >
             <div class="flex items-center justify-between px-4 py-5 border-b border-white/10">

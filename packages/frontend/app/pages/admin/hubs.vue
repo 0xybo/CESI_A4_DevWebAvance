@@ -6,7 +6,7 @@
                     <h1 class="text-2xl font-bold tracking-tight">Hubs</h1>
                     <p class="text-muted-foreground text-sm mt-1">Centres de distribution</p>
                 </div>
-                <Button><Plus class="w-4 h-4 mr-2" />Nouveau hub</Button>
+                <Button @click="createOpen = true"><Plus class="w-4 h-4 mr-2" />Nouveau hub</Button>
             </div>
 
             <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -30,7 +30,7 @@
             </div>
 
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                <Card v-for="hub in hubs" :key="hub.id">
+                <Card v-for="hub in hubs" :key="hub.id" class="relative">
                     <CardHeader class="pb-3">
                         <div class="flex items-start justify-between">
                             <div
@@ -38,15 +38,14 @@
                             >
                                 <Building2 class="w-5 h-5 text-primary" />
                             </div>
-                            <Badge
-                                :class="
-                                    hub.status === 'active'
-                                        ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100'
-                                        : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100'
-                                "
-                            >
-                                {{ hub.status === 'active' ? 'Actif' : 'Inactif' }}
-                            </Badge>
+                            <div class="flex items-center gap-1">
+                                <Button variant="ghost" size="icon" class="h-7 w-7" @click="editItem(hub)">
+                                    <Pencil class="w-3.5 h-3.5" />
+                                </Button>
+                                <Button variant="ghost" size="icon" class="h-7 w-7 text-destructive hover:text-destructive" @click="deleteItem(hub)">
+                                    <Trash2 class="w-3.5 h-3.5" />
+                                </Button>
+                            </div>
                         </div>
                         <CardTitle class="text-sm mt-3">{{ hub.name }}</CardTitle>
                         <CardDescription class="font-mono text-xs">{{ hub.reference }}</CardDescription>
@@ -71,18 +70,54 @@
                             </div>
                         </div>
                     </CardContent>
+                    <Badge
+                        :class="
+                            hub.badgeClass
+                        "
+                        class="absolute top-3 right-12"
+                    >
+                        {{ hub.status === 'active' ? 'Actif' : 'Inactif' }}
+                    </Badge>
                 </Card>
             </div>
         </div>
     </AppLayout>
+
+    <AdminCreateModal
+        v-model:open="createOpen"
+        title="Nouveau hub"
+        api-endpoint="/hubs"
+        :fields="hubFields"
+        @success="fetchHubs"
+    />
+
+    <AdminEditModal
+        v-model:open="editOpen"
+        title="Modifier le hub"
+        api-endpoint="/hubs"
+        :fields="hubFields"
+        :item="selectedItem"
+        @success="fetchHubs"
+    />
+
+    <AdminDeleteDialog
+        v-model:open="deleteOpen"
+        api-endpoint="/hubs"
+        :item="selectedItem"
+        @success="fetchHubs"
+    />
 </template>
 
 <script setup lang="ts">
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, Plus } from '@lucide/vue';
+import { Building2, Pencil, Plus, Trash2 } from '@lucide/vue';
 import type { ApiHub } from '@/composables/useApi';
+import AdminCreateModal from '@/components/admin/AdminCreateModal.vue';
+import AdminEditModal from '@/components/admin/AdminEditModal.vue';
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog.vue';
+import type { FormField } from '@/components/admin/AdminFormFields.vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Hubs — Transvirex' });
@@ -99,7 +134,34 @@ const hubs = ref<Array<{
     drivers: number;
     phone: string;
     status: string;
+    badgeClass: string;
 }>>([]);
+
+const createOpen = ref(false);
+const editOpen = ref(false);
+const deleteOpen = ref(false);
+const selectedItem = ref<Record<string, any> | null>(null);
+
+const hubFields: FormField[] = [
+    { name: 'name', label: 'Nom', type: 'text', required: true },
+    { name: 'phone_number', label: 'Téléphone', type: 'text' },
+    { name: 'capacity_parcels_day', label: 'Capacité (colis/jour)', type: 'number' },
+    { name: 'status', label: 'Statut', type: 'select', options: [
+        { value: 'active', label: 'Actif' },
+        { value: 'inactive', label: 'Inactif' },
+        { value: 'unavailable', label: 'Indisponible' },
+    ]},
+];
+
+function editItem(item: any) {
+    selectedItem.value = item;
+    editOpen.value = true;
+}
+
+function deleteItem(item: any) {
+    selectedItem.value = item;
+    deleteOpen.value = true;
+}
 
 async function fetchHubs() {
     loading.value = true;
@@ -115,6 +177,9 @@ async function fetchHubs() {
             drivers: h._count.users,
             phone: h.phone_number ?? '—',
             status: h.status ?? 'inactive',
+            badgeClass: h.status === 'active'
+                ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100'
+                : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
         }));
     } catch (e: any) {
         error.value = e?.message ?? 'Impossible de charger les hubs';

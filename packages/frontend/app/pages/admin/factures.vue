@@ -6,7 +6,7 @@
                     <h1 class="text-2xl font-bold tracking-tight">Factures</h1>
                     <p class="text-muted-foreground text-sm mt-1">Devis, bons de commande et factures</p>
                 </div>
-                <Button><Plus class="w-4 h-4 mr-2" />Nouvelle facture</Button>
+                <Button @click="createOpen = true"><Plus class="w-4 h-4 mr-2" />Nouvelle facture</Button>
             </div>
 
             <Card>
@@ -49,6 +49,7 @@
                                 <TableHead>Échéance</TableHead>
                                 <TableHead>Statut</TableHead>
                                 <TableHead class="w-12 text-right">PDF</TableHead>
+                                <TableHead class="w-20">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -73,6 +74,16 @@
                                         <FileDown v-else class="w-3.5 h-3.5" />
                                     </Button>
                                 </TableCell>
+                                <TableCell>
+                                    <div class="flex items-center gap-1">
+                                        <Button variant="ghost" size="icon" class="h-8 w-8" @click="editItem(f)">
+                                            <Pencil class="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" class="h-8 w-8 text-destructive hover:text-destructive" @click="deleteItem(f)">
+                                            <Trash2 class="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
@@ -83,6 +94,30 @@
             </Card>
         </div>
     </AppLayout>
+
+    <AdminCreateModal
+        v-model:open="createOpen"
+        title="Nouvelle facture"
+        api-endpoint="/invoices"
+        :fields="invoiceFields"
+        @success="fetchInvoices"
+    />
+
+    <AdminEditModal
+        v-model:open="editOpen"
+        title="Modifier la facture"
+        api-endpoint="/invoices"
+        :fields="invoiceFields"
+        :item="selectedItem"
+        @success="fetchInvoices"
+    />
+
+    <AdminDeleteDialog
+        v-model:open="deleteOpen"
+        api-endpoint="/invoices"
+        :item="selectedItem"
+        @success="fetchInvoices"
+    />
 </template>
 
 <script setup lang="ts">
@@ -92,8 +127,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { exportFacturePdf, type FactureData } from '@/composables/usePdfExport';
-import { FileDown, Loader2, Plus, Search } from '@lucide/vue';
+import { FileDown, Loader2, Pencil, Plus, Search, Trash2 } from '@lucide/vue';
 import type { ApiInvoice, PaginatedResponse } from '@/composables/useApi';
+import AdminCreateModal from '@/components/admin/AdminCreateModal.vue';
+import AdminEditModal from '@/components/admin/AdminEditModal.vue';
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog.vue';
+import type { FormField } from '@/components/admin/AdminFormFields.vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Factures — Transvirex' });
@@ -105,6 +144,38 @@ const exporting = ref<string | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const invoices = ref<Array<FactureData & { id: string }>>([]);
+
+const createOpen = ref(false);
+const editOpen = ref(false);
+const deleteOpen = ref(false);
+const selectedItem = ref<Record<string, any> | null>(null);
+
+const invoiceFields: FormField[] = [
+    { name: 'customer_id', label: 'Client', type: 'select', required: true, asyncOptions: { endpoint: '/customers', labelKey: 'customer_name', valueKey: 'id' } },
+    { name: 'hub_id', label: 'Hub', type: 'select', required: true, asyncOptions: { endpoint: '/hubs', labelKey: 'name', valueKey: 'id' } },
+    { name: 'service_type', label: 'Type de service', type: 'select', options: [
+        { value: 'express', label: 'Express' },
+        { value: 'standard', label: 'Standard' },
+        { value: 'freight', label: 'Fret' },
+    ]},
+    { name: 'priority', label: 'Priorité', type: 'select', required: true, options: [
+        { value: 'urgent', label: 'Urgent' },
+        { value: 'high', label: 'Haute' },
+        { value: 'standard', label: 'Standard' },
+        { value: 'low', label: 'Basse' },
+    ]},
+    { name: 'due_date', label: 'Date d\'échéance', type: 'date', required: true },
+];
+
+function editItem(item: any) {
+    selectedItem.value = item;
+    editOpen.value = true;
+}
+
+function deleteItem(item: any) {
+    selectedItem.value = item;
+    deleteOpen.value = true;
+}
 
 const statusMap: Record<string, string> = {
     quotation: 'Devis',

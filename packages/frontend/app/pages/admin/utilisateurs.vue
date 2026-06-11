@@ -6,7 +6,7 @@
                     <h1 class="text-2xl font-bold tracking-tight">Utilisateurs</h1>
                     <p class="text-muted-foreground text-sm mt-1">Gestion des comptes et accès</p>
                 </div>
-                <Button><Plus class="w-4 h-4 mr-2" />Nouvel utilisateur</Button>
+                <Button @click="createOpen = true"><Plus class="w-4 h-4 mr-2" />Nouvel utilisateur</Button>
             </div>
 
             <Card>
@@ -48,6 +48,7 @@
                                 <TableHead>Rôle</TableHead>
                                 <TableHead>Hub</TableHead>
                                 <TableHead>Statut</TableHead>
+                                <TableHead class="w-20">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -78,6 +79,16 @@
                                         {{ u.status === 'active' ? 'Actif' : 'Inactif' }}
                                     </Badge>
                                 </TableCell>
+                                <TableCell>
+                                    <div class="flex items-center gap-1">
+                                        <Button variant="ghost" size="icon" class="h-8 w-8" @click="editItem(u)">
+                                            <Pencil class="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" class="h-8 w-8 text-destructive hover:text-destructive" @click="deleteItem(u)">
+                                            <Trash2 class="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
@@ -88,6 +99,30 @@
             </Card>
         </div>
     </AppLayout>
+
+    <AdminCreateModal
+        v-model:open="createOpen"
+        title="Nouvel utilisateur"
+        api-endpoint="/users"
+        :fields="userFields"
+        @success="fetchUsers"
+    />
+
+    <AdminEditModal
+        v-model:open="editOpen"
+        title="Modifier l'utilisateur"
+        api-endpoint="/users"
+        :fields="userEditFields"
+        :item="selectedItem"
+        @success="fetchUsers"
+    />
+
+    <AdminDeleteDialog
+        v-model:open="deleteOpen"
+        api-endpoint="/users"
+        :item="selectedItem"
+        @success="fetchUsers"
+    />
 </template>
 
 <script setup lang="ts">
@@ -96,8 +131,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search } from '@lucide/vue';
+import { Pencil, Plus, Search, Trash2 } from '@lucide/vue';
 import type { ApiUser, PaginatedResponse } from '@/composables/useApi';
+import AdminCreateModal from '@/components/admin/AdminCreateModal.vue';
+import AdminEditModal from '@/components/admin/AdminEditModal.vue';
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog.vue';
+import type { FormField } from '@/components/admin/AdminFormFields.vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Utilisateurs — Transvirex' });
@@ -116,6 +155,58 @@ const users = ref<Array<{
     hub: string;
     status: string;
 }>>([]);
+
+const createOpen = ref(false);
+const editOpen = ref(false);
+const deleteOpen = ref(false);
+const selectedItem = ref<Record<string, any> | null>(null);
+
+const userFields: FormField[] = [
+    { name: 'email', label: 'Email', type: 'email', required: true },
+    { name: 'password', label: 'Mot de passe', type: 'password', required: true },
+    { name: 'firstname', label: 'Prénom', type: 'text' },
+    { name: 'lastname', label: 'Nom', type: 'text' },
+    { name: 'phone_number', label: 'Téléphone', type: 'text' },
+    { name: 'role', label: 'Rôle', type: 'select', required: true, options: [
+        { value: 'admin', label: 'Administrateur' },
+        { value: 'dispatcher', label: 'Répartiteur' },
+        { value: 'driver', label: 'Chauffeur' },
+        { value: 'business_manager', label: 'Commercial' },
+    ]},
+    { name: 'hub_id', label: 'Hub', type: 'select', asyncOptions: { endpoint: '/hubs', labelKey: 'name', valueKey: 'id' } },
+    { name: 'status', label: 'Statut', type: 'select', options: [
+        { value: 'active', label: 'Actif' },
+        { value: 'inactive', label: 'Inactif' },
+    ]},
+];
+
+const userEditFields: FormField[] = [
+    { name: 'email', label: 'Email', type: 'email', required: true },
+    { name: 'firstname', label: 'Prénom', type: 'text' },
+    { name: 'lastname', label: 'Nom', type: 'text' },
+    { name: 'phone_number', label: 'Téléphone', type: 'text' },
+    { name: 'role', label: 'Rôle', type: 'select', required: true, options: [
+        { value: 'admin', label: 'Administrateur' },
+        { value: 'dispatcher', label: 'Répartiteur' },
+        { value: 'driver', label: 'Chauffeur' },
+        { value: 'business_manager', label: 'Commercial' },
+    ]},
+    { name: 'hub_id', label: 'Hub', type: 'select', asyncOptions: { endpoint: '/hubs', labelKey: 'name', valueKey: 'id' } },
+    { name: 'status', label: 'Statut', type: 'select', options: [
+        { value: 'active', label: 'Actif' },
+        { value: 'inactive', label: 'Inactif' },
+    ]},
+];
+
+function editItem(item: any) {
+    selectedItem.value = item;
+    editOpen.value = true;
+}
+
+function deleteItem(item: any) {
+    selectedItem.value = item;
+    deleteOpen.value = true;
+}
 
 async function fetchUsers() {
     loading.value = true;

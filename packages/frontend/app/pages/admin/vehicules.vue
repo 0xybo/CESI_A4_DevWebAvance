@@ -6,7 +6,7 @@
                     <h1 class="text-2xl font-bold tracking-tight">Véhicules</h1>
                     <p class="text-muted-foreground text-sm mt-1">Gestion de la flotte de véhicules</p>
                 </div>
-                <Button><Plus class="w-4 h-4 mr-2" />Nouveau véhicule</Button>
+                <Button @click="createOpen = true"><Plus class="w-4 h-4 mr-2" />Nouveau véhicule</Button>
             </div>
 
             <div v-if="loading" class="text-center py-12 text-muted-foreground">
@@ -29,6 +29,7 @@
                                 <TableHead>Hub</TableHead>
                                 <TableHead>Chauffeur assigné</TableHead>
                                 <TableHead>Statut</TableHead>
+                                <TableHead class="w-20">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -49,6 +50,16 @@
                                         "
                                     >{{ v.status }}</Badge>
                                 </TableCell>
+                                <TableCell>
+                                    <div class="flex items-center gap-1">
+                                        <Button variant="ghost" size="icon" class="h-8 w-8" @click="editItem(v)">
+                                            <Pencil class="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" class="h-8 w-8 text-destructive hover:text-destructive" @click="deleteItem(v)">
+                                            <Trash2 class="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
@@ -59,6 +70,30 @@
             </Card>
         </div>
     </AppLayout>
+
+    <AdminCreateModal
+        v-model:open="createOpen"
+        title="Nouveau véhicule"
+        api-endpoint="/vehicles"
+        :fields="vehicleFields"
+        @success="fetchVehicles"
+    />
+
+    <AdminEditModal
+        v-model:open="editOpen"
+        title="Modifier le véhicule"
+        api-endpoint="/vehicles"
+        :fields="vehicleFields"
+        :item="selectedItem"
+        @success="fetchVehicles"
+    />
+
+    <AdminDeleteDialog
+        v-model:open="deleteOpen"
+        api-endpoint="/vehicles"
+        :item="selectedItem"
+        @success="fetchVehicles"
+    />
 </template>
 
 <script setup lang="ts">
@@ -66,8 +101,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus } from '@lucide/vue';
+import { Pencil, Plus, Trash2 } from '@lucide/vue';
 import type { ApiVehicle } from '@/composables/useApi';
+import AdminCreateModal from '@/components/admin/AdminCreateModal.vue';
+import AdminEditModal from '@/components/admin/AdminEditModal.vue';
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog.vue';
+import type { FormField } from '@/components/admin/AdminFormFields.vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Véhicules — Transvirex' });
@@ -84,6 +123,27 @@ const vehicles = ref<Array<{
     driver: string | null;
     status: string;
 }>>([]);
+
+const createOpen = ref(false);
+const editOpen = ref(false);
+const deleteOpen = ref(false);
+const selectedItem = ref<Record<string, any> | null>(null);
+
+const vehicleFields: FormField[] = [
+    { name: 'type', label: 'Type', type: 'text', required: true, placeholder: 'Camion, fourgon, etc.' },
+    { name: 'license_plate', label: 'Immatriculation', type: 'text', required: true },
+    { name: 'hub_id', label: 'Hub', type: 'select', asyncOptions: { endpoint: '/hubs', labelKey: 'name', valueKey: 'id' } },
+];
+
+function editItem(item: any) {
+    selectedItem.value = item;
+    editOpen.value = true;
+}
+
+function deleteItem(item: any) {
+    selectedItem.value = item;
+    deleteOpen.value = true;
+}
 
 function mapStatus(s: string | null): string {
     if (s === 'in_use' || s === 'active') return 'En service';

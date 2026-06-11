@@ -334,6 +334,14 @@ export class GatewayService {
         return this.proxyDelete(`${this.serviceUrls.billing}/invoices/${invoiceId}/parcels/${parcelId}`, user);
     }
 
+    getParcel(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyGet(`${this.serviceUrls.billing}/parcels/${id}`, user);
+    }
+
+    updateParcel(id: string, body: unknown, user?: { sub: string; email: string; role: string }) {
+        return this.proxyPatch(`${this.serviceUrls.billing}/parcels/${id}`, body, user);
+    }
+
     /** List all parcels across all invoices. */
     listAllParcels(page: number, limit: number, user?: { sub: string; email: string; role: string }) {
         return this.proxyGet(this.appendQuery(`${this.serviceUrls.billing}/parcels`, { page, limit }), user);
@@ -343,6 +351,22 @@ export class GatewayService {
     listCustomers(hub_id?: string, user?: { sub: string; email: string; role: string }) {
         const query = hub_id ? `?hub_id=${encodeURIComponent(hub_id)}` : '';
         return this.proxyGet(`${this.serviceUrls.billing}/customers${query}`, user);
+    }
+
+    getCustomer(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyGet(`${this.serviceUrls.billing}/customers/${id}`, user);
+    }
+
+    createCustomer(body: unknown, user?: { sub: string; email: string; role: string }) {
+        return this.proxyPost(`${this.serviceUrls.billing}/customers`, body, user);
+    }
+
+    updateCustomer(id: string, body: unknown, user?: { sub: string; email: string; role: string }) {
+        return this.proxyPatch(`${this.serviceUrls.billing}/customers/${id}`, body, user);
+    }
+
+    deleteCustomer(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyDelete(`${this.serviceUrls.billing}/customers/${id}`, user);
     }
 
     /** Proxy health check to the authentication service. */

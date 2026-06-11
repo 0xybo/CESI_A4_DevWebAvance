@@ -367,6 +367,19 @@ export class BillingService {
         });
     }
 
+    private async generateCustomerReference(): Promise<string> {
+        const last = await this.prisma.customer.findFirst({
+            orderBy: { reference: 'desc' },
+            select: { reference: true },
+        });
+        let nextNum = 1;
+        if (last) {
+            const match = last.reference.match(/CLI-(\d+)/);
+            if (match) nextNum = parseInt(match[1], 10) + 1;
+        }
+        return `CLI-${String(nextNum).padStart(3, '0')}`;
+    }
+
     /** List customers with optional hub filter. */
     async listCustomers(hub_id?: string) {
         const where: Prisma.CustomerWhereInput = {};
@@ -394,6 +407,140 @@ export class BillingService {
             hub: c.hub,
             active_invoices: c._count.invoices,
         }));
+    }
+
+    async getCustomer(id: string) {
+        const customer = await this.prisma.customer.findUnique({
+            where: { id },
+            include: {
+                hub: { select: { id: true, reference: true, name: true } },
+                address: true,
+                _count: { select: { invoices: true } },
+            },
+        });
+        if (!customer) throw new NotFoundException('Client introuvable');
+        return {
+            id: customer.id,
+            reference: customer.reference,
+            customer_name: customer.customer_name,
+            customer_type: customer.customer_type,
+            contact_firstname: customer.contact_firstname,
+            contact_lastname: customer.contact_lastname,
+            phone_number: customer.phone_number,
+            email: customer.email,
+            status: customer.status,
+            hub: customer.hub,
+            address: customer.address,
+            active_invoices: customer._count.invoices,
+        };
+    }
+
+    async createCustomer(dto: {
+        customer_name?: string;
+        customer_type?: string;
+        contact_firstname?: string;
+        contact_lastname?: string;
+        phone_number?: string;
+        email?: string;
+        hub_id?: string;
+        address_id?: string;
+        status?: string;
+    }) {
+        const reference = await this.generateCustomerReference();
+        return this.prisma.customer.create({
+            data: {
+                reference,
+                customer_name: dto.customer_name,
+                customer_type: dto.customer_type,
+                contact_firstname: dto.contact_firstname,
+                contact_lastname: dto.contact_lastname,
+                phone_number: dto.phone_number,
+                email: dto.email,
+                hub_id: dto.hub_id,
+                address_id: dto.address_id,
+                status: dto.status as any,
+            },
+            include: {
+                hub: { select: { id: true, reference: true, name: true } },
+            },
+        });
+    }
+
+    async updateCustomer(id: string, dto: {
+        customer_name?: string;
+        customer_type?: string;
+        contact_firstname?: string;
+        contact_lastname?: string;
+        phone_number?: string;
+        email?: string;
+        hub_id?: string;
+        address_id?: string;
+        status?: string;
+    }) {
+        const existing = await this.prisma.customer.findUnique({ where: { id } });
+        if (!existing) throw new NotFoundException('Client introuvable');
+
+        const updateData: Record<string, unknown> = {};
+        if (dto.customer_name !== undefined) updateData.customer_name = dto.customer_name;
+        if (dto.customer_type !== undefined) updateData.customer_type = dto.customer_type;
+        if (dto.contact_firstname !== undefined) updateData.contact_firstname = dto.contact_firstname;
+        if (dto.contact_lastname !== undefined) updateData.contact_lastname = dto.contact_lastname;
+        if (dto.phone_number !== undefined) updateData.phone_number = dto.phone_number;
+        if (dto.email !== undefined) updateData.email = dto.email;
+        if (dto.hub_id !== undefined) updateData.hub_id = dto.hub_id;
+        if (dto.address_id !== undefined) updateData.address_id = dto.address_id;
+        if (dto.status !== undefined) updateData.status = dto.status;
+
+        return this.prisma.customer.update({
+            where: { id },
+            data: updateData,
+            include: {
+                hub: { select: { id: true, reference: true, name: true } },
+            },
+        });
+    }
+
+    async deleteCustomer(id: string) {
+        const existing = await this.prisma.customer.findUnique({ where: { id } });
+        if (!existing) throw new NotFoundException('Client introuvable');
+
+        await this.prisma.customer.delete({ where: { id } });
+        return { success: true };
+    }
+
+    async getParcel(id: string) {
+        const parcel = await this.prisma.parcel.findUnique({
+            where: { id },
+            include: {
+                invoice: {
+                    select: {
+                        id: true,
+                        reference: true,
+                        status: true,
+                        customer: { select: { customer_name: true } },
+                    },
+                },
+            },
+        });
+        if (!parcel) throw new NotFoundException('Colis introuvable');
+        return parcel;
+    }
+
+    async updateParcel(id: string, dto: { weight?: number; reference?: string }) {
+        const existing = await this.prisma.parcel.findUnique({ where: { id } });
+        if (!existing) throw new NotFoundException('Colis introuvable');
+
+        const updateData: Record<string, unknown> = {};
+        if (dto.weight !== undefined) updateData.weight = dto.weight;
+        if (dto.reference !== undefined) updateData.reference = dto.reference;
+
+        const parcel = await this.prisma.parcel.update({
+            where: { id },
+            data: updateData,
+        });
+
+        await this.recalculateAmount(existing.invoice_id);
+        return parcel;
     }
 
     /** List all parcels across all invoices with associated invoice reference. */
