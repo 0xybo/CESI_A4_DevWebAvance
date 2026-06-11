@@ -438,6 +438,104 @@ export async function exportFacturePdf(f: FactureData) {
     doc.save(`${f.ref}.pdf`);
 }
 
+// ─── Relance de paiement ──────────────────────────────────────────────────
+/** Data required to generate a payment reminder PDF. */
+export interface RelanceData {
+    /** Invoice reference number. */
+    ref: string;
+    /** Client name. */
+    client: string;
+    /** Amount due (formatted, e.g. "€ 1 250"). */
+    amount: string;
+    /** Original due date string. */
+    due: string;
+}
+
+/**
+ * Generate and download a payment reminder (relance) PDF for an overdue invoice.
+ * @param r - Reminder data used to populate the document.
+ */
+export async function exportRelancePdf(r: RelanceData) {
+    const { jsPDF, autoTable } = await loadPdf();
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+    header(doc, 'RELANCE', r.ref);
+
+    const y = 47;
+
+    // Bill-to block
+    infoBlock(doc, 14, y, 86, 40, 'Destinataire', [
+        r.client,
+        '45 Rue du Commerce',
+        '75015 Paris, France',
+    ]);
+
+    // Reminder details block (dark)
+    infoBlock(
+        doc,
+        108,
+        y,
+        88,
+        40,
+        'Facture concernée',
+        [r.ref, `Échéance dépassée : ${r.due}`, `Montant dû : ${r.amount}`],
+        true,
+    );
+
+    // Reminder body text
+    const bodyY = y + 50;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...Tx);
+    doc.text('Objet : relance pour facture impayée', 14, bodyY);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...Mt);
+    const lines = [
+        `Sauf erreur ou omission de notre part, la facture ${r.ref} d'un montant de`,
+        `${r.amount}, arrivée à échéance le ${r.due}, demeure impayée à ce jour.`,
+        '',
+        'Nous vous remercions de bien vouloir procéder à son règlement dans les',
+        'meilleurs délais. Si le paiement a été effectué récemment, veuillez ne pas',
+        'tenir compte de cette relance.',
+    ];
+    lines.forEach((l, i) => doc.text(l, 14, bodyY + 9 + i * 6));
+
+    // Outstanding amount table
+    autoTable(doc, {
+        ...baseTable,
+        startY: bodyY + 52,
+        head: [['Référence', 'Échéance', 'Montant dû']],
+        body: [[r.ref, r.due, r.amount]],
+        columnStyles: {
+            0: { cellWidth: 90 },
+            1: { cellWidth: 50 },
+            2: { halign: 'right' as const, cellWidth: 42, fontStyle: 'bold' as const },
+        },
+    });
+
+    const tableEnd = (doc as any).lastAutoTable.finalY + 10;
+
+    // Legal note
+    doc.setFillColor(255, 237, 213);
+    doc.roundedRect(14, tableEnd, PW - 28, 14, 2, 2, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...A);
+    doc.text('Note :', 19, tableEnd + 6);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...Tx);
+    doc.text(
+        'Tout retard de paiement entraîne des pénalités de 3× le taux légal (art. L.441-10 C.com.). Indemnité forfaitaire : 40 €.',
+        32,
+        tableEnd + 6,
+    );
+
+    footer(doc);
+    doc.save(`relance-${r.ref}.pdf`);
+}
+
 // ─── Bon de commande ──────────────────────────────────────────────────────
 /**
  * Generate and download a purchase order PDF.
@@ -806,5 +904,5 @@ export async function exportRapportPdf(r: ReportData) {
  * Returns functions to generate invoices, purchase orders, mission orders, and reports.
  */
 export function usePdfExport() {
-    return { exportFacturePdf, exportBonCommandePdf, exportOrdreMissionPdf, exportRapportPdf };
+    return { exportFacturePdf, exportBonCommandePdf, exportOrdreMissionPdf, exportRapportPdf, exportRelancePdf };
 }

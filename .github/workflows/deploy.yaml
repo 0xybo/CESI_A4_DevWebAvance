@@ -370,19 +370,32 @@ jobs:
                   envs: GHCR_USERNAME,GHCR_TOKEN,JWT_SECRET,DEEPSEEK_API_KEY
                   script: |
                       kubectl create namespace production --kubeconfig ~/.kube/config 2>/dev/null || true
-                      kubectl delete secret ghcr-secret -n production --kubeconfig ~/.kube/config 2>/dev/null || true
+
+                      # ghcr-secret : apply idempotent (pas de delete/create)
                       kubectl create secret docker-registry ghcr-secret \
                         --docker-server=ghcr.io \
                         --docker-username=$GHCR_USERNAME \
                         --docker-password=$GHCR_TOKEN \
                         -n production \
-                        --kubeconfig ~/.kube/config
-                      kubectl delete secret transvirex-secrets -n production --kubeconfig ~/.kube/config 2>/dev/null || true
+                        --kubeconfig ~/.kube/config \
+                        --dry-run=client -o yaml | kubectl apply -f - --kubeconfig ~/.kube/config
+
+                      # Garde-fou : on refuse de déployer un secret vide, ce qui
+                      # écraserait silencieusement la clé valide (-> crash du service AI / 503).
+                      if [ -z "$JWT_SECRET" ] || [ -z "$DEEPSEEK_API_KEY" ]; then
+                        echo "❌ JWT_SECRET ou DEEPSEEK_API_KEY vide — abandon pour ne pas écraser le secret existant"
+                        exit 1
+                      fi
+
+                      # transvirex-secrets : apply idempotent (crée si absent, met à jour
+                      # sinon, sans fenêtre où le secret n'existe plus).
                       kubectl create secret generic transvirex-secrets \
-                        --from-literal=JWT_SECRET=$JWT_SECRET \
-                        --from-literal=DEEPSEEK_API_KEY=$DEEPSEEK_API_KEY \
+                        --from-literal=JWT_SECRET="$JWT_SECRET" \
+                        --from-literal=DEEPSEEK_API_KEY="$DEEPSEEK_API_KEY" \
                         -n production \
-                        --kubeconfig ~/.kube/config
+                        --kubeconfig ~/.kube/config \
+                        --dry-run=client -o yaml | kubectl apply -f - --kubeconfig ~/.kube/config
+
                       rm -rf /tmp/k8s-manifests && mkdir -p /tmp/k8s-manifests
 
             - name: 🚀 Transfer K8s manifests
