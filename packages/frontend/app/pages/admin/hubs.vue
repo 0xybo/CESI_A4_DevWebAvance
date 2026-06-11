@@ -33,16 +33,26 @@
                 <Card v-for="hub in hubs" :key="hub.id" class="relative">
                     <CardHeader class="pb-3">
                         <div class="flex items-start justify-between">
-                            <div
-                                class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
-                            >
-                                <Building2 class="w-5 h-5 text-primary" />
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
+                                >
+                                    <Building2 class="w-5 h-5 text-primary" />
+                                </div>
+                                <Badge :class="hub.badgeClass" class="">
+                                    {{ hub.status === 'active' ? 'Actif' : 'Inactif' }}
+                                </Badge>
                             </div>
                             <div class="flex items-center gap-1">
                                 <Button variant="ghost" size="icon" class="h-7 w-7" @click="editItem(hub)">
                                     <Pencil class="w-3.5 h-3.5" />
                                 </Button>
-                                <Button variant="ghost" size="icon" class="h-7 w-7 text-destructive hover:text-destructive" @click="deleteItem(hub)">
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    class="h-7 w-7 text-destructive hover:text-destructive"
+                                    @click="deleteItem(hub)"
+                                >
                                     <Trash2 class="w-3.5 h-3.5" />
                                 </Button>
                             </div>
@@ -70,14 +80,6 @@
                             </div>
                         </div>
                     </CardContent>
-                    <Badge
-                        :class="
-                            hub.badgeClass
-                        "
-                        class="absolute top-3 right-12"
-                    >
-                        {{ hub.status === 'active' ? 'Actif' : 'Inactif' }}
-                    </Badge>
                 </Card>
             </div>
         </div>
@@ -100,12 +102,7 @@
         @success="fetchHubs"
     />
 
-    <AdminDeleteDialog
-        v-model:open="deleteOpen"
-        api-endpoint="/hubs"
-        :item="selectedItem"
-        @success="fetchHubs"
-    />
+    <AdminDeleteDialog v-model:open="deleteOpen" api-endpoint="/hubs" :item="selectedItem" @success="fetchHubs" />
 </template>
 
 <script setup lang="ts">
@@ -125,17 +122,19 @@ useHead({ title: 'Hubs — Transvirex' });
 const { get } = useApi();
 const loading = ref(true);
 const error = ref<string | null>(null);
-const hubs = ref<Array<{
-    id: string;
-    reference: string;
-    name: string;
-    address: string;
-    capacity: number;
-    drivers: number;
-    phone: string;
-    status: string;
-    badgeClass: string;
-}>>([]);
+const hubs = ref<
+    Array<{
+        id: string;
+        reference: string;
+        name: string;
+        address: string;
+        capacity: number;
+        drivers: number;
+        phone: string;
+        status: string;
+        badgeClass: string;
+    }>
+>([]);
 
 const createOpen = ref(false);
 const editOpen = ref(false);
@@ -146,11 +145,16 @@ const hubFields: FormField[] = [
     { name: 'name', label: 'Nom', type: 'text', required: true },
     { name: 'phone_number', label: 'Téléphone', type: 'text' },
     { name: 'capacity_parcels_day', label: 'Capacité (colis/jour)', type: 'number' },
-    { name: 'status', label: 'Statut', type: 'select', options: [
-        { value: 'active', label: 'Actif' },
-        { value: 'inactive', label: 'Inactif' },
-        { value: 'unavailable', label: 'Indisponible' },
-    ]},
+    {
+        name: 'status',
+        label: 'Statut',
+        type: 'select',
+        options: [
+            { value: 'active', label: 'Actif' },
+            { value: 'inactive', label: 'Inactif' },
+            { value: 'unavailable', label: 'Indisponible' },
+        ],
+    },
 ];
 
 function editItem(item: any) {
@@ -177,9 +181,10 @@ async function fetchHubs() {
             drivers: h._count.users,
             phone: h.phone_number ?? '—',
             status: h.status ?? 'inactive',
-            badgeClass: h.status === 'active'
-                ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100'
-                : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
+            badgeClass:
+                h.status === 'active'
+                    ? 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100'
+                    : 'bg-gray-100 text-gray-500 border-gray-200 hover:bg-gray-100',
         }));
     } catch (e: any) {
         error.value = e?.message ?? 'Impossible de charger les hubs';
@@ -190,3 +195,4 @@ async function fetchHubs() {
 
 onMounted(fetchHubs);
 </script>
+
