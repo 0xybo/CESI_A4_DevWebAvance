@@ -6,7 +6,7 @@
                     <h1 class="text-2xl font-bold tracking-tight">Livraisons</h1>
                     <p class="text-muted-foreground text-sm mt-1">Gestion de toutes les livraisons</p>
                 </div>
-                <Button><Plus class="w-4 h-4 mr-2" />Nouvelle livraison</Button>
+                <Button @click="createOpen = true"><Plus class="w-4 h-4 mr-2" />Nouvelle livraison</Button>
             </div>
 
             <Card>
@@ -37,7 +37,7 @@
             </div>
 
             <Card v-else>
-                <CardContent class="p-0">
+                <CardContent class="p-0 overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -48,6 +48,7 @@
                                 <TableHead>Priorité</TableHead>
                                 <TableHead>Statut</TableHead>
                                 <TableHead>Date</TableHead>
+                                <TableHead class="w-20">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -59,6 +60,16 @@
                                 <TableCell><Badge :class="priorityClass(d.priority)">{{ d.priority }}</Badge></TableCell>
                                 <TableCell><Badge :class="statusClass(d.status)">{{ d.status }}</Badge></TableCell>
                                 <TableCell class="text-muted-foreground text-xs">{{ d.date }}</TableCell>
+                                <TableCell>
+                                    <div class="flex items-center gap-1">
+                                        <Button variant="ghost" size="icon" class="h-8 w-8" @click="editItem(d)">
+                                            <Pencil class="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" class="h-8 w-8 text-destructive hover:text-destructive" @click="deleteItem(d)">
+                                            <Trash2 class="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
@@ -69,6 +80,30 @@
             </Card>
         </div>
     </AppLayout>
+
+    <AdminCreateModal
+        v-model:open="createOpen"
+        title="Nouvelle livraison"
+        api-endpoint="/deliveries"
+        :fields="deliveryFields"
+        @success="fetchDeliveries"
+    />
+
+    <AdminEditModal
+        v-model:open="editOpen"
+        title="Modifier la livraison"
+        api-endpoint="/deliveries"
+        :fields="deliveryEditFields"
+        :item="selectedItem"
+        @success="fetchDeliveries"
+    />
+
+    <AdminDeleteDialog
+        v-model:open="deleteOpen"
+        api-endpoint="/deliveries"
+        :item="selectedItem"
+        @success="fetchDeliveries"
+    />
 </template>
 
 <script setup lang="ts">
@@ -77,8 +112,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search } from '@lucide/vue';
+import { Pencil, Plus, Search, Trash2 } from '@lucide/vue';
 import type { ApiDelivery, PaginatedResponse } from '@/composables/useApi';
+import { useRealtime } from '@/composables/useRealtime';
+import AdminCreateModal from '@/components/admin/AdminCreateModal.vue';
+import AdminEditModal from '@/components/admin/AdminEditModal.vue';
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog.vue';
+import type { FormField } from '@/components/admin/AdminFormFields.vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Livraisons — Transvirex' });
@@ -99,6 +139,24 @@ const deliveries = ref<Array<{
     date: string;
 }>>([]);
 
+const createOpen = ref(false);
+const editOpen = ref(false);
+const deleteOpen = ref(false);
+const selectedItem = ref<Record<string, any> | null>(null);
+
+const deliveryFields: FormField[] = [
+    { name: 'invoices_id', label: 'Facture', type: 'select', required: true, asyncOptions: { endpoint: '/invoices?limit=200', labelKey: 'reference', valueKey: 'id' } },
+    { name: 'driver_id', label: 'Chauffeur', type: 'select', asyncOptions: { endpoint: '/users?role=driver&limit=100', labelKey: 'firstname', valueKey: 'id' } },
+    { name: 'scheduled_at', label: 'Planifiée le', type: 'datetime' },
+    { name: 'notes', label: 'Notes', type: 'textarea' },
+];
+
+const deliveryEditFields: FormField[] = [
+    { name: 'driver_id', label: 'Chauffeur', type: 'select', asyncOptions: { endpoint: '/users?role=driver&limit=100', labelKey: 'firstname', valueKey: 'id' } },
+    { name: 'scheduled_at', label: 'Planifiée le', type: 'datetime' },
+    { name: 'notes', label: 'Notes', type: 'textarea' },
+];
+
 const statusLabels: Record<string, string> = {
     delivered: 'Livré',
     planned: 'En attente',
@@ -109,6 +167,16 @@ const statusLabels: Record<string, string> = {
 };
 
 const statuses = Object.values(statusLabels);
+
+function editItem(item: any) {
+    selectedItem.value = item;
+    editOpen.value = true;
+}
+
+function deleteItem(item: any) {
+    selectedItem.value = item;
+    deleteOpen.value = true;
+}
 
 async function fetchDeliveries() {
     loading.value = true;
@@ -174,5 +242,12 @@ function priorityClass(p: string) {
     )[p] ?? '';
 }
 
-onMounted(fetchDeliveries);
+onMounted(async () => {
+    await fetchDeliveries();
+
+    const realtime = useRealtime();
+    realtime.on('delivery:status', () => fetchDeliveries());
+    realtime.on('delivery:assigned', () => fetchDeliveries());
+    realtime.connect();
+});
 </script>

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { navigateTo, useCookie, useRoute } from '#app';
 import { useNotifications } from '@/composables/useNotifications';
+import { useRealtime } from '@/composables/useRealtime';
+import { useNotificationStore } from '@/stores/notification';
 import {
     BarChart3,
     Bell,
@@ -15,6 +17,7 @@ import {
     Menu,
     Package,
     Settings,
+    X,
     ShoppingBag,
     Truck,
     UserCog,
@@ -25,15 +28,51 @@ import {
 type Role = 'admin' | 'dispatcher' | 'driver' | 'business_manager';
 
 const route = useRoute();
-/** Whether the sidebar is collapsed. */
+/** Whether the sidebar is collapsed (desktop only). */
 const collapsed = ref(false);
+/** Whether the mobile sidebar drawer is open. */
+const mobileSidebarOpen = ref(false);
 /** Whether the notification panel is open. */
 const notifOpen = ref(false);
 
 // ── Notifications (dispatcher only) ──────────────────────────────────────────
-const { notifications, unreadCount, markRead, markAllRead, startPolling } = useNotifications();
+const { notifications, unreadCount, missionAlerts, missionUnreadCount, markRead, markAllRead, startPolling, startDriverPolling, clearMissionAlerts, onSseEvent, setSseConnected } = useNotifications();
+function parseUserIdFromToken(token: string): string | null {
+    try {
+        const b64 = token.split('.')[1]?.replace(/-/g, '+').replace(/_/g, '/');
+        if (!b64) return null;
+        return (JSON.parse(atob(b64)).sub as string) || null;
+    } catch {
+        return null;
+    }
+}
+
 onMounted(() => {
     if (userRole.value === 'dispatcher') startPolling();
+    if (userRole.value === 'driver' && accessToken.value) {
+        const driverId = parseUserIdFromToken(accessToken.value);
+        if (driverId) startDriverPolling(driverId, 30000);
+    }
+
+    // Connect SSE for real-time events.
+    const realtime = useRealtime();
+    realtime.on('delivery:status', (data) => {
+        onSseEvent('delivery:status', data);
+    });
+    realtime.on('delivery:assigned', (data) => {
+        onSseEvent('delivery:assigned', data);
+        const notifStore = useNotificationStore();
+        notifStore.pushNotification({ type: 'assignment', deliveryId: data.deliveryId as string, message: (data.reference as string) ? `Livraison ${data.reference} assignée` : 'Nouvelle assignation' });
+        notifStore.pushToast(`Livraison ${data.reference as string ?? ''} assignée`, 'info');
+    });
+    realtime.on('delivery:incident', (data) => {
+        onSseEvent('delivery:incident', data);
+        const notifStore = useNotificationStore();
+        notifStore.pushNotification({ type: 'incident', deliveryId: data.deliveryId as string, message: data.description as string ?? 'Incident signalé' });
+        notifStore.pushToast(`Incident : ${data.description as string ?? ''}`, 'warning');
+    });
+    realtime.connect();
+    setSseConnected(true);
 });
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -80,6 +119,8 @@ const roleLabels: Record<Role, string> = {
 };
 /** Localized label for the current user role. */
 const roleLabel = computed(() => roleLabels[userRole.value] ?? userRole.value);
+
+const totalUnread = computed(() => unreadCount.value + missionUnreadCount.value);
 
 /** Tailwind classes for the role badge in the sidebar. */
 const roleBadgeClass = computed(
@@ -347,10 +388,21 @@ onMounted(() => {
 
 <template>
     <div class="flex h-screen bg-background overflow-hidden">
+        <!-- Mobile backdrop -->
+        <div
+            v-if="mobileSidebarOpen"
+            class="fixed inset-0 z-30 bg-black/40 backdrop-blur-sm lg:hidden"
+            @click="mobileSidebarOpen = false"
+        />
+
         <!-- ───── Sidebar ───── -->
         <aside
-            class="flex flex-col shrink-0 bg-primary-dark shadow-xl transition-all duration-300 fixed top-0 left-0 h-full z-20"
-            :class="collapsed ? 'w-16' : 'w-64'"
+            class="flex flex-col shrink-0 bg-primary-dark shadow-xl transition-all duration-300 z-40"
+            :class="[
+                collapsed ? 'w-16' : 'w-64',
+                'fixed inset-y-0 left-0 lg:static lg:inset-auto',
+                mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+            ]"
         >
             <!-- Logo + toggle -->
             <div class="flex items-center justify-between px-4 py-5 border-b border-white/10">
@@ -358,14 +410,22 @@ onMounted(() => {
                     <p class="text-xl font-bold text-white leading-none whitespace-nowrap">Transvirex</p>
                     <p class="text-xs text-primary-light mt-0.5 whitespace-nowrap">Moving Intelligence</p>
                 </div>
-                <button
-                    @click="collapsed = !collapsed"
-                    class="p-1.5 rounded-lg text-primary-light hover:text-white hover:bg-white/10 transition-colors shrink-0"
-                    :class="collapsed ? 'mx-auto' : ''"
-                >
-                    <ChevronLeft v-if="!collapsed" class="w-4 h-4" />
-                    <Menu v-else class="w-4 h-4" />
-                </button>
+                <div class="flex items-center gap-1">
+                    <button
+                        @click="mobileSidebarOpen = false"
+                        class="p-1.5 rounded-lg text-primary-light hover:text-white hover:bg-white/10 transition-colors shrink-0 lg:hidden"
+                    >
+                        <X class="w-4 h-4" />
+                    </button>
+                    <button
+                        @click="collapsed = !collapsed"
+                        class="p-1.5 rounded-lg text-primary-light hover:text-white hover:bg-white/10 transition-colors shrink-0 max-lg:hidden"
+                        :class="collapsed ? 'mx-auto' : ''"
+                    >
+                        <ChevronLeft v-if="!collapsed" class="w-4 h-4" />
+                        <Menu v-else class="w-4 h-4" />
+                    </button>
+                </div>
             </div>
 
             <!-- Navigation groupée -->
@@ -383,6 +443,7 @@ onMounted(() => {
                         v-for="item in group.items"
                         :key="item.href"
                         :to="item.href"
+                        @click="mobileSidebarOpen = false"
                         class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group/item"
                         :class="[
                             isActive(item.href)
@@ -438,16 +499,22 @@ onMounted(() => {
         </aside>
 
         <!-- ───── Zone principale ───── -->
-        <div class="flex-1 flex flex-col overflow-hidden">
+        <div class="flex-1 flex flex-col overflow-hidden min-w-0">
             <!-- Header / Topbar -->
-            <header class="h-14 bg-card border-b border-border flex items-center justify-between px-6 shrink-0 z-10">
+            <header class="h-14 bg-card border-b border-border flex items-center justify-between px-4 md:px-6 shrink-0 z-10">
                 <!-- Breadcrumb -->
-                <div class="flex items-center gap-2 text-sm">
-                    <span class="text-muted-foreground font-medium">Transvirex</span>
-                    <ChevronRight class="w-3.5 h-3.5 text-muted-foreground/50" />
-                    <span class="text-muted-foreground capitalize">{{ roleLabel }}</span>
-                    <ChevronRight class="w-3.5 h-3.5 text-muted-foreground/50" />
-                    <span class="font-semibold text-foreground">{{ pageTitle }}</span>
+                <div class="flex items-center gap-2 text-sm min-w-0">
+                    <button
+                        @click="mobileSidebarOpen = true"
+                        class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors lg:hidden -ml-1"
+                    >
+                        <Menu class="w-4 h-4" />
+                    </button>
+                    <span class="text-muted-foreground font-medium max-sm:hidden">Transvirex</span>
+                    <ChevronRight class="w-3.5 h-3.5 text-muted-foreground/50 max-sm:hidden" />
+                    <span class="text-muted-foreground capitalize max-sm:hidden">{{ roleLabel }}</span>
+                    <ChevronRight class="w-3.5 h-3.5 text-muted-foreground/50 max-sm:hidden" />
+                    <span class="font-semibold text-foreground truncate">{{ pageTitle }}</span>
                 </div>
 
                 <!-- Actions droite -->
@@ -459,10 +526,10 @@ onMounted(() => {
                         >
                             <Bell class="w-5 h-5" />
                             <span
-                                v-if="unreadCount > 0"
+                                v-if="totalUnread > 0"
                                 class="absolute top-1 right-1 min-w-4 h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white"
                             >
-                                {{ unreadCount > 9 ? '9+' : unreadCount }}
+                                {{ totalUnread > 9 ? '9+' : totalUnread }}
                             </span>
                             <span
                                 v-else
@@ -472,8 +539,39 @@ onMounted(() => {
                         <!-- Notification panel -->
                         <div
                             v-if="notifOpen"
-                            class="absolute right-0 top-10 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
+                            class="fixed right-4 left-4 sm:absolute sm:left-auto top-14 sm:top-10 sm:w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden"
                         >
+                            <template v-if="userRole === 'driver'">
+                                <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                                    <span class="font-semibold text-sm text-gray-800">Missions</span>
+                                    <button
+                                        v-if="missionUnreadCount > 0"
+                                        @click="clearMissionAlerts"
+                                        class="text-xs text-blue-600 hover:underline"
+                                    >
+                                        Effacer
+                                    </button>
+                                </div>
+                                <div class="max-h-36 overflow-y-auto divide-y divide-gray-50">
+                                    <div
+                                        v-if="missionAlerts.length === 0"
+                                        class="px-4 py-4 text-center text-sm text-muted-foreground"
+                                    >
+                                        Aucune nouvelle mission
+                                    </div>
+                                    <div
+                                        v-for="alert in missionAlerts"
+                                        :key="alert.id"
+                                        class="px-4 py-2.5 text-xs"
+                                        :class="alert.type === 'assigned' ? 'bg-green-50/60' : 'bg-red-50/60'"
+                                    >
+                                        <p class="text-gray-800">{{ alert.message }}</p>
+                                        <p class="text-[10px] text-gray-400 mt-0.5">
+                                            {{ new Date(alert.timestamp).toLocaleTimeString('fr-FR') }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </template>
                             <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                                 <span class="font-semibold text-sm text-gray-800">Incidents signalés</span>
                                 <button
@@ -484,10 +582,10 @@ onMounted(() => {
                                     Tout marquer lu
                                 </button>
                             </div>
-                            <div class="max-h-72 overflow-y-auto divide-y divide-gray-50">
+                            <div class="max-h-36 overflow-y-auto divide-y divide-gray-50">
                                 <div
                                     v-if="notifications.length === 0"
-                                    class="px-4 py-6 text-center text-sm text-muted-foreground"
+                                    class="px-4 py-4 text-center text-sm text-muted-foreground"
                                 >
                                     Aucun incident signalé
                                 </div>
@@ -495,7 +593,7 @@ onMounted(() => {
                                     v-for="n in notifications"
                                     :key="n.id"
                                     @click="markRead(n.id)"
-                                    class="px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                                    class="px-4 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors"
                                     :class="!n.read ? 'bg-orange-50/60' : ''"
                                 >
                                     <div class="flex items-start gap-2">
@@ -541,7 +639,7 @@ onMounted(() => {
             </header>
 
             <!-- Contenu de la page -->
-            <main class="flex-1 overflow-y-auto p-6">
+            <main class="flex-1 overflow-y-auto p-4 md:p-6">
                 <slot />
             </main>
         </div>

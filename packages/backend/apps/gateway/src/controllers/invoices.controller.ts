@@ -1,5 +1,5 @@
 import { Roles } from '@app/guards/roles.decorator';
-import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, DefaultValuePipe, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, Req } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import { CreateParcelDto } from '../dto/create-parcel.dto';
@@ -47,11 +47,38 @@ export class InvoicesController {
         return this.gatewayService.listParcels(id, (req as any).user);
     }
 
+    @ApiTags('Parcels')
+    @Get('parcels/:id')
+    @ApiBearerAuth('JWT-auth')
+    @Roles('admin', 'dispatcher')
+    @ApiOperation({ summary: 'Get a parcel by ID' })
+    @ApiParam({ name: 'id', description: 'Parcel UUID' })
+    @ApiResponse({ status: 200, description: 'Parcel details' })
+    @ApiResponse({ status: 404, description: 'Parcel not found' })
+    getParcel(@Param('id') id: string, @Req() req: Request) {
+        return this.gatewayService.getParcel(id, (req as any).user);
+    }
+
+    @ApiTags('Parcels')
+    @Patch('parcels/:id')
+    @ApiBearerAuth('JWT-auth')
+    @Roles('admin', 'dispatcher')
+    @ApiOperation({ summary: 'Update a parcel', description: 'Update weight or reference of a parcel.' })
+    @ApiParam({ name: 'id', description: 'Parcel UUID' })
+    @ApiResponse({ status: 200, description: 'Parcel updated' })
+    @ApiResponse({ status: 404, description: 'Parcel not found' })
+    updateParcel(@Param('id') id: string, @Body() body: { weight?: number; reference?: string }, @Req() req: Request) {
+        return this.gatewayService.updateParcel(id, body, (req as any).user);
+    }
+
     @ApiTags('Invoices')
     @Delete('invoices/:id/parcels/:parcelId')
     @ApiBearerAuth('JWT-auth')
     @Roles('admin', 'dispatcher')
-    @ApiOperation({ summary: 'Delete a parcel', description: 'Remove a parcel from an invoice and recalculate amount.' })
+    @ApiOperation({
+        summary: 'Delete a parcel',
+        description: 'Remove a parcel from an invoice and recalculate amount.',
+    })
     @ApiParam({ name: 'id', description: 'Invoice UUID' })
     @ApiParam({ name: 'parcelId', description: 'Parcel UUID' })
     @ApiResponse({ status: 200, description: 'Parcel deleted' })

@@ -6,7 +6,7 @@
                     <h1 class="text-2xl font-bold tracking-tight">Clients</h1>
                     <p class="text-muted-foreground text-sm mt-1">Gestion du portefeuille clients</p>
                 </div>
-                <Button><Plus class="w-4 h-4 mr-2" />Nouveau client</Button>
+                <Button @click="createOpen = true"><Plus class="w-4 h-4 mr-2" />Nouveau client</Button>
             </div>
 
             <Card>
@@ -28,7 +28,7 @@
             </div>
 
             <Card v-else>
-                <CardContent class="p-0">
+                <CardContent class="p-0 overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -39,6 +39,7 @@
                                 <TableHead>Email</TableHead>
                                 <TableHead>Hub</TableHead>
                                 <TableHead>Statut</TableHead>
+                                <TableHead class="w-20">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -60,6 +61,16 @@
                                         {{ c.status === 'active' ? 'Actif' : 'Inactif' }}
                                     </Badge>
                                 </TableCell>
+                                <TableCell>
+                                    <div class="flex items-center gap-1">
+                                        <Button variant="ghost" size="icon" class="h-8 w-8" @click="editItem(c)">
+                                            <Pencil class="w-3.5 h-3.5" />
+                                        </Button>
+                                        <Button variant="ghost" size="icon" class="h-8 w-8 text-destructive hover:text-destructive" @click="deleteItem(c)">
+                                            <Trash2 class="w-3.5 h-3.5" />
+                                        </Button>
+                                    </div>
+                                </TableCell>
                             </TableRow>
                         </TableBody>
                     </Table>
@@ -70,6 +81,30 @@
             </Card>
         </div>
     </AppLayout>
+
+    <AdminCreateModal
+        v-model:open="createOpen"
+        title="Nouveau client"
+        api-endpoint="/customers"
+        :fields="customerFields"
+        @success="fetchClients"
+    />
+
+    <AdminEditModal
+        v-model:open="editOpen"
+        title="Modifier le client"
+        api-endpoint="/customers"
+        :fields="customerFields"
+        :item="selectedItem"
+        @success="fetchClients"
+    />
+
+    <AdminDeleteDialog
+        v-model:open="deleteOpen"
+        api-endpoint="/customers"
+        :item="selectedItem"
+        @success="fetchClients"
+    />
 </template>
 
 <script setup lang="ts">
@@ -78,8 +113,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Search } from '@lucide/vue';
+import { Pencil, Plus, Search, Trash2 } from '@lucide/vue';
 import type { ApiCustomer } from '@/composables/useApi';
+import AdminCreateModal from '@/components/admin/AdminCreateModal.vue';
+import AdminEditModal from '@/components/admin/AdminEditModal.vue';
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog.vue';
+import type { FormField } from '@/components/admin/AdminFormFields.vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Clients — Transvirex' });
@@ -98,6 +137,32 @@ const clients = ref<Array<{
     hub_name: string;
     status: string;
 }>>([]);
+
+const createOpen = ref(false);
+const editOpen = ref(false);
+const deleteOpen = ref(false);
+const selectedItem = ref<Record<string, any> | null>(null);
+
+const customerFields: FormField[] = [
+    { name: 'customer_name', label: 'Nom', type: 'text', required: true },
+    { name: 'customer_type', label: 'Type', type: 'select', options: [{ value: 'company', label: 'Entreprise' }, { value: 'individual', label: 'Particulier' }] },
+    { name: 'contact_firstname', label: 'Prénom du contact', type: 'text' },
+    { name: 'contact_lastname', label: 'Nom du contact', type: 'text' },
+    { name: 'email', label: 'Email', type: 'email' },
+    { name: 'phone_number', label: 'Téléphone', type: 'text' },
+    { name: 'hub_id', label: 'Hub', type: 'select', asyncOptions: { endpoint: '/hubs', labelKey: 'name', valueKey: 'id' } },
+    { name: 'status', label: 'Statut', type: 'select', options: [{ value: 'active', label: 'Actif' }, { value: 'inactive', label: 'Inactif' }] },
+];
+
+function editItem(item: any) {
+    selectedItem.value = item;
+    editOpen.value = true;
+}
+
+function deleteItem(item: any) {
+    selectedItem.value = item;
+    deleteOpen.value = true;
+}
 
 async function fetchClients() {
     loading.value = true;

@@ -1,8 +1,37 @@
 import { BlockInProduction } from '@app/guards';
 import { Body, Controller, Delete, ForbiddenException, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { IsIn, IsOptional, IsString } from 'class-validator';
 import { Public } from '../../../../libs/guards/src/public.decorator';
 import { GatewayService } from '../gateway.service';
+
+/** DTO for debug notification sending. */
+class SendTestNotificationDto {
+    @IsString()
+    event!: string;
+
+    @IsIn(['driver', 'dispatcher', 'all'])
+    audience!: 'driver' | 'dispatcher' | 'all';
+
+    @IsOptional()
+    @IsString()
+    userId?: string;
+
+    @IsOptional()
+    @IsString()
+    deliveryId?: string;
+
+    @IsOptional()
+    @IsString()
+    driverId?: string;
+
+    @IsString()
+    message!: string;
+
+    @IsOptional()
+    @IsString()
+    summary?: string;
+}
 
 @Controller()
 export class DebugController {
@@ -288,5 +317,20 @@ export class DebugController {
     @ApiResponse({ status: 200, description: 'Frontend logs cleared' })
     async clearFrontendLogs() {
         return this.gatewayService.clearLogs('frontend_logs');
+    }
+
+    @ApiTags('Debug')
+    @Public()
+    @Post('debug/notifications/send')
+    @BlockInProduction()
+    @ApiOperation({
+        summary: 'Send a test notification',
+        description:
+            'Manually trigger an SSE notification event and optionally persist it in MongoDB. Only available in non-production environments.',
+    })
+    @ApiBody({ type: SendTestNotificationDto })
+    @ApiResponse({ status: 201, description: 'Notification sent' })
+    async sendTestNotification(@Body() body: SendTestNotificationDto) {
+        return this.gatewayService.sendTestNotification(body);
     }
 }

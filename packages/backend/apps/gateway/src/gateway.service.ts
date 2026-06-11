@@ -4,6 +4,7 @@ import { MongoDBService } from '@app/mongodb';
 import { RabbitMQService } from '@app/rabbitmq';
 import { RedisService } from '@app/redis';
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { SseService } from './sse/sse.service';
 
 /** French labels for delivery statuses, used in driver notifications. */
 const DELIVERY_STATUS_LABELS: Record<string, string> = {
@@ -33,6 +34,7 @@ export class GatewayService {
         private readonly redisService: RedisService,
         private readonly rabbitMQService: RabbitMQService,
         private readonly mongoDBService: MongoDBService,
+        private readonly sseService: SseService,
     ) {}
 
     /** Fetch the health status of a downstream service. */
@@ -250,9 +252,17 @@ export class GatewayService {
         return this.proxyPatch(`${this.serviceUrls.delivery}/hubs/${id}`, body, user);
     }
 
-    /** Update driver GPS position via the delivery service. */
-    updatePosition(body: unknown, user?: { sub: string; email: string; role: string }) {
-        return this.proxyPatch(`${this.serviceUrls.delivery}/deliveries/position`, body, user);
+    /** Update driver GPS position via the delivery service, then broadcast to dispatchers. */
+    async updatePosition(body: unknown, user?: { sub: string; email: string; role: string }) {
+        const result = await this.proxyPatch(`${this.serviceUrls.delivery}/deliveries/position`, body, user);
+        if (user) {
+            this.sseService.broadcast('position:update', {
+                driverId: user.sub,
+                ...(body as { lat: number; lng: number }),
+                updatedAt: new Date().toISOString(),
+            });
+        }
+        return result;
     }
 
     /** Get driver position via the delivery service. */
@@ -263,9 +273,11 @@ export class GatewayService {
     /** Update delivery status via the delivery service, then notify the driver when changed by someone else. */
     async updateDeliveryStatus(id: string, body: unknown, user?: { sub: string; email: string; role: string }) {
         const result = await this.proxyPatch(`${this.serviceUrls.delivery}/deliveries/${id}/status`, body, user);
+        const status = (body as { status?: string })?.status ?? '';
+        // Broadcast status change to all connected dispatchers/admins.
+        this.sseService.broadcast('delivery:status', { deliveryId: id, status, timestamp: new Date().toISOString() });
         // Notify the assigned driver only when the change was made by a dispatcher/admin.
         if (user?.role !== 'driver') {
-            const status = (body as { status?: string })?.status ?? '';
             const delivery = await this.prisma.delivery.findUnique({
                 where: { id },
                 select: { reference: true, driver: { select: { user_id: true } } },
@@ -322,18 +334,39 @@ export class GatewayService {
         return this.proxyDelete(`${this.serviceUrls.billing}/invoices/${invoiceId}/parcels/${parcelId}`, user);
     }
 
+    getParcel(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyGet(`${this.serviceUrls.billing}/parcels/${id}`, user);
+    }
+
+    updateParcel(id: string, body: unknown, user?: { sub: string; email: string; role: string }) {
+        return this.proxyPatch(`${this.serviceUrls.billing}/parcels/${id}`, body, user);
+    }
+
     /** List all parcels across all invoices. */
     listAllParcels(page: number, limit: number, user?: { sub: string; email: string; role: string }) {
-        return this.proxyGet(
-            this.appendQuery(`${this.serviceUrls.billing}/parcels`, { page, limit }),
-            user,
-        );
+        return this.proxyGet(this.appendQuery(`${this.serviceUrls.billing}/parcels`, { page, limit }), user);
     }
 
     /** List customers via the billing service. */
     listCustomers(hub_id?: string, user?: { sub: string; email: string; role: string }) {
         const query = hub_id ? `?hub_id=${encodeURIComponent(hub_id)}` : '';
         return this.proxyGet(`${this.serviceUrls.billing}/customers${query}`, user);
+    }
+
+    getCustomer(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyGet(`${this.serviceUrls.billing}/customers/${id}`, user);
+    }
+
+    createCustomer(body: unknown, user?: { sub: string; email: string; role: string }) {
+        return this.proxyPost(`${this.serviceUrls.billing}/customers`, body, user);
+    }
+
+    updateCustomer(id: string, body: unknown, user?: { sub: string; email: string; role: string }) {
+        return this.proxyPatch(`${this.serviceUrls.billing}/customers/${id}`, body, user);
+    }
+
+    deleteCustomer(id: string, user?: { sub: string; email: string; role: string }) {
+        return this.proxyDelete(`${this.serviceUrls.billing}/customers/${id}`, user);
     }
 
     /** Proxy health check to the authentication service. */
@@ -438,6 +471,12 @@ export class GatewayService {
                 id,
                 'assignment',
             );
+            this.sseService.broadcast('delivery:assigned', {
+                deliveryId: id,
+                reference,
+                driverId,
+                timestamp: new Date().toISOString(),
+            });
         }
         return result;
     }
@@ -682,5 +721,50 @@ export class GatewayService {
         const db = await this.mongoDBService.getDb();
         const result = await db.collection(collectionName).deleteMany({});
         return { deletedCount: result.deletedCount };
+    }
+
+    /**
+     * Send a test notification via SSE and optionally persist it in MongoDB.
+     * Used by the debug / administation UI to manually trigger notifications.
+     */
+    async sendTestNotification(notif: {
+        event: string;
+        audience: 'driver' | 'dispatcher' | 'all';
+        userId?: string;
+        deliveryId?: string;
+        driverId?: string;
+        message: string;
+        summary?: string;
+    }) {
+        const broadcastData: Record<string, unknown> = {
+            type: notif.event,
+            deliveryId: notif.deliveryId ?? null,
+            driverId: notif.driverId ?? null,
+            message: notif.message,
+            userId: notif.userId ?? null,
+            timestamp: new Date().toISOString(),
+            _test: true,
+        };
+
+        const filter =
+            notif.audience === 'all'
+                ? undefined
+                : (client: { userId: string; role: string }) => {
+                      if (notif.audience === 'driver') return client.role === 'driver';
+                      return client.role === 'dispatcher' || client.role === 'admin';
+                  };
+
+        this.sseService.broadcast(notif.event, broadcastData, filter);
+
+        if (notif.userId && (notif.event === 'delivery:assigned' || notif.event === 'delivery:status')) {
+            await this.createDriverNotification(
+                notif.userId,
+                notif.summary ?? notif.message,
+                notif.deliveryId ?? 'debug',
+                notif.event === 'delivery:assigned' ? 'assignment' : 'status',
+            );
+        }
+
+        return { success: true, event: notif.event, audience: notif.audience };
     }
 }

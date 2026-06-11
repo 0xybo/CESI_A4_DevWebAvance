@@ -10,9 +10,19 @@ import type { UpdateDeliveryDto } from './dto/update-delivery.dto';
 const deliveryInclude = {
     invoice: {
         include: {
-            customer: { select: { id: true, customer_name: true } },
+            customer: {
+                select: {
+                    id: true,
+                    customer_name: true,
+                    contact_firstname: true,
+                    contact_lastname: true,
+                    phone_number: true,
+                    email: true,
+                },
+            },
             hub: { select: { id: true, name: true } },
-            delivery_address: { select: { address: true, city: true, postal_code: true } },
+            delivery_address: { select: { id: true, address: true, street: true, city: true, postal_code: true } },
+            parcels: { select: { id: true, reference: true, weight: true } },
         },
     },
     driver: {
@@ -56,6 +66,13 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 /** Delivery statuses considered "in progress" for a driver's current tour. */
 const ACTIVE_DELIVERY_STATUSES = ['planned', 'delivering', 'delayed', 'blocked'] as const;
 
+/** Auto-generate a delivery reference in the format LIV-{YYYYMMDD}-{XXXX}. */
+function generateDeliveryReference(): string {
+    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `LIV-${date}-${random}`;
+}
+
 @Injectable()
 export class DeliveryService {
     constructor(
@@ -64,12 +81,36 @@ export class DeliveryService {
         @Inject('RMQ_CLIENT') private readonly rmqClient: ClientProxy,
     ) {}
 
-    /** Store the driver's live GPS position in Redis with a 5-minute TTL. */
+    /** Store the driver's live GPS position in Redis with a 5-minute TTL, and persist to delivery position_history in Postgres. */
     async updatePosition(driverId: string, lat: number, lng: number) {
         const key = `driver:position:${driverId}`;
-        const value = JSON.stringify({ lat, lng, updatedAt: new Date().toISOString() });
+        const timestamp = new Date().toISOString();
+        const value = JSON.stringify({ lat, lng, updatedAt: timestamp });
         await this.redis.set(key, value, 300);
-        return { lat, lng, updatedAt: new Date().toISOString() };
+
+        // Persist to the driver's active "delivering" delivery position_history (keep max 100).
+        try {
+            const driver = await this.prisma.driver.findUnique({ where: { user_id: driverId } });
+            if (driver) {
+                const activeDelivery = await this.prisma.delivery.findFirst({
+                    where: { driver_id: driver.id, status: { in: ['delivering'] as any } },
+                    orderBy: { reference: 'desc' },
+                });
+                if (activeDelivery) {
+                    const history = (activeDelivery.position_history as Array<{ lat: number; lng: number; ts: string }>) ?? [];
+                    const entry = { lat, lng, ts: timestamp };
+                    const updated = [...history, entry].slice(-100);
+                    await this.prisma.delivery.update({
+                        where: { id: activeDelivery.id },
+                        data: { position_history: updated as any },
+                    });
+                }
+            }
+        } catch {
+            // Fail silently — Redis live position is the critical path.
+        }
+
+        return { lat, lng, updatedAt: timestamp };
     }
 
     /** Retrieve the current cached GPS position of a driver. Returns null if the key expired. */
@@ -198,7 +239,7 @@ export class DeliveryService {
         const eventStatus = (data.status ?? 'information') as any;
         if (!data.description) throw new BadRequestException('description requise');
 
-        return this.prisma.deliveryEvent.create({
+        const event = await this.prisma.deliveryEvent.create({
             data: {
                 delivery_id: deliveryId,
                 description: data.description,
@@ -209,6 +250,19 @@ export class DeliveryService {
                 created_at: new Date(),
             },
         });
+
+        // Emit RabbitMQ event for real-time alerts when an incident is reported.
+        if (['warning', 'critical', 'fatal'].includes(data.type ?? '')) {
+            this.rmqClient.emit('delivery.incident_created', {
+                deliveryId,
+                eventId: event.id,
+                type: data.type,
+                description: data.description,
+                timestamp: new Date().toISOString(),
+            });
+        }
+
+        return event;
     }
 
     async listHubs() {
@@ -364,13 +418,15 @@ export class DeliveryService {
     }
 
     async createDelivery(dto: CreateDeliveryDto) {
+        const reference = dto.reference ?? generateDeliveryReference();
         return this.prisma.delivery.create({
             data: {
                 invoices_id: dto.invoices_id,
-                reference: dto.reference,
+                reference,
                 driver_id: dto.driver_id ?? null,
-                status: dto.status,
+                status: dto.status ?? 'planned',
                 notes: dto.notes,
+                scheduled_at: dto.scheduled_at ? new Date(dto.scheduled_at) : null,
                 position_history: dto.position_history ?? undefined,
             },
             include: deliveryInclude,
@@ -389,6 +445,9 @@ export class DeliveryService {
         if (dto.notes !== undefined) updateData.notes = dto.notes;
         if (dto.position_history !== undefined) {
             updateData.position_history = dto.position_history;
+        }
+        if (dto.scheduled_at !== undefined) {
+            updateData.scheduled_at = dto.scheduled_at ? new Date(dto.scheduled_at) : null;
         }
 
         return this.prisma.delivery.update({

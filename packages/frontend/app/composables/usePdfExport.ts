@@ -274,6 +274,33 @@ export interface MissionStop {
     note?: string;
 }
 
+/** Data for a delivery status statistic entry in a report. */
+export interface ReportStatusStat {
+    label: string;
+    count: number;
+    pct: number;
+    color: string;
+}
+
+/** Data for a hub performance entry in a report. */
+export interface ReportHubPerf {
+    name: string;
+    deliveries: number;
+    rate: number;
+}
+
+/** Data required to generate a report PDF. */
+export interface ReportData {
+    /** Report title / period label. */
+    title: string;
+    /** KPI cards: label, value, trend. */
+    kpis: Array<{ label: string; value: string; trend: number }>;
+    /** Delivery status breakdown. */
+    deliveryStats: ReportStatusStat[];
+    /** Hub performance table. */
+    hubPerf: ReportHubPerf[];
+}
+
 /** Data required to generate a mission order PDF. */
 export interface MissionData {
     /** Mission reference number. */
@@ -714,10 +741,70 @@ export async function exportOrdreMissionPdf(m: MissionData) {
     doc.save(`${m.ref}_ordre-de-mission.pdf`);
 }
 
+// ─── Report / Performance ──────────────────────────────────────────────────
+/**
+ * Generate and download a performance report PDF.
+ * @param r - Report data (KPIs, delivery stats, hub performance).
+ */
+export async function exportRapportPdf(r: ReportData) {
+    const { jsPDF, autoTable } = await loadPdf();
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+    });
+
+    header(doc, 'RAPPORT DE PERFORMANCE', r.title);
+
+    const y = 47;
+    const kW = (PW - 28 - 8) / 4;
+
+    // KPI boxes row
+    r.kpis.forEach((kpi, i) => {
+        const x = 14 + i * (kW + 2.5);
+        kpiBox(doc, x, y, kW, kpi.value, kpi.label, i === 3);
+    });
+
+    // Delivery status distribution table
+    autoTable(doc, {
+        ...baseTable,
+        startY: y + 26,
+        head: [['Statut', 'Nombre', 'Pourcentage']],
+        body: r.deliveryStats.map((s) => [s.label, String(s.count), `${s.pct}%`]),
+        columnStyles: {
+            0: { cellWidth: 90 },
+            1: { halign: 'center' as const, cellWidth: 50 },
+            2: { halign: 'right' as const, cellWidth: 40 },
+        },
+    });
+
+    const tableEnd = (doc as any).lastAutoTable.finalY + 8;
+
+    // Hub performance table
+    autoTable(doc, {
+        ...baseTable,
+        startY: tableEnd,
+        head: [['Hub', 'Livraisons', 'Taux de succès']],
+        body: r.hubPerf.map((h) => [
+            h.name,
+            String(h.deliveries),
+            { content: `${h.rate}%`, styles: { fontStyle: h.rate >= 95 ? 'bold' : 'normal', textColor: h.rate >= 95 ? [22, 163, 74] : h.rate >= 85 ? [234, 88, 12] : [220, 38, 38] } },
+        ]),
+        columnStyles: {
+            0: { cellWidth: 100 },
+            1: { halign: 'center' as const, cellWidth: 40 },
+            2: { halign: 'right' as const, cellWidth: 44 },
+        },
+    });
+
+    footer(doc);
+    doc.save(`rapport-performance-${r.title.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+}
+
 /**
  * Composable for PDF export operations.
- * Returns functions to generate invoices, purchase orders, and mission orders.
+ * Returns functions to generate invoices, purchase orders, mission orders, and reports.
  */
 export function usePdfExport() {
-    return { exportFacturePdf, exportBonCommandePdf, exportOrdreMissionPdf };
+    return { exportFacturePdf, exportBonCommandePdf, exportOrdreMissionPdf, exportRapportPdf };
 }

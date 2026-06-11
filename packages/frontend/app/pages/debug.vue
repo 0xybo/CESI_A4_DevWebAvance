@@ -10,6 +10,7 @@ import {
     MessageSquareMoreIcon,
     PackageIcon,
     RefreshCwIcon,
+    BellIcon,
 } from '@lucide/vue';
 import SidebarLink from '~/components/debug/SidebarLink.vue';
 
@@ -75,6 +76,7 @@ async function handleSeed() {
                 <SidebarLink href="/debug/mongodb" label="MongoDB" :icon="PackageIcon" />
                 <SidebarLink href="/debug/logs" label="Logs" :icon="FileTextIcon" />
                 <SidebarLink href="/api/docs" label="API Docs" :icon="GlobeIcon" :external="true" />
+                <SidebarLink href="/debug/notifications" label="Notifications" :icon="BellIcon" />
 
                 <button
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-300 hover:bg-slate-800 hover:text-white transition w-full text-left"
@@ -99,4 +101,3 @@ async function handleSeed() {
         </main>
     </div>
 </template>
-

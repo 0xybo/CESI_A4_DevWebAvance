@@ -9,6 +9,7 @@ import {
     Heart,
     MessageSquareMore,
     Zap,
+    Bell,
 } from '@lucide/vue';
 import { storeToRefs } from 'pinia';
 
@@ -184,9 +185,20 @@ const { servicesOk, servicesError, lastChecked, services } = storeToRefs(health)
                             <p class="text-xs text-gray-500">Consultation des logs applicatifs</p>
                         </div>
                     </NuxtLink>
+                    <NuxtLink
+                        to="/debug/notifications"
+                        class="flex items-center gap-4 p-4 rounded-lg border border-gray-200 hover:border-blue-400 hover:shadow-sm transition"
+                    >
+                        <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center shrink-0">
+                            <Bell class="w-5 h-5 text-pink-600" />
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900 text-sm">Notifications</p>
+                            <p class="text-xs text-gray-500">Déclenchement manuel de notifications</p>
+                        </div>
+                    </NuxtLink>
                 </div>
             </UiCardContent>
         </UiCard>
     </div>
 </template>
-

@@ -6,7 +6,7 @@
                     <h1 class="text-2xl font-bold tracking-tight">Chauffeurs</h1>
                     <p class="text-muted-foreground text-sm mt-1">Gestion de la flotte de chauffeurs</p>
                 </div>
-                <Button><Plus class="w-4 h-4 mr-2" />Nouveau chauffeur</Button>
+                <Button @click="createOpen = true"><Plus class="w-4 h-4 mr-2" />Nouveau chauffeur</Button>
             </div>
 
             <Card>
@@ -28,7 +28,7 @@
             </div>
 
             <Card v-else>
-                <CardContent class="p-0">
+                <CardContent class="p-0 overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -79,6 +79,30 @@
             </Card>
         </div>
     </AppLayout>
+
+    <AdminCreateModal
+        v-model:open="createOpen"
+        title="Nouveau chauffeur"
+        api-endpoint="/users"
+        :fields="driverFields"
+        @success="fetchDrivers"
+    />
+
+    <AdminEditModal
+        v-model:open="editOpen"
+        title="Modifier le chauffeur"
+        api-endpoint="/users"
+        :fields="driverEditFields"
+        :item="selectedItem"
+        @success="fetchDrivers"
+    />
+
+    <AdminDeleteDialog
+        v-model:open="deleteOpen"
+        api-endpoint="/users"
+        :item="selectedItem"
+        @success="fetchDrivers"
+    />
 </template>
 
 <script setup lang="ts">
@@ -89,6 +113,10 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Search } from '@lucide/vue';
 import type { ApiUser, PaginatedResponse } from '@/composables/useApi';
+import AdminCreateModal from '@/components/admin/AdminCreateModal.vue';
+import AdminEditModal from '@/components/admin/AdminEditModal.vue';
+import AdminDeleteDialog from '@/components/admin/AdminDeleteDialog.vue';
+import type { FormField } from '@/components/admin/AdminFormFields.vue';
 
 definePageMeta({ layout: false });
 useHead({ title: 'Chauffeurs — Transvirex' });
@@ -107,6 +135,38 @@ const drivers = ref<Array<{
     rating: string;
     status: string;
 }>>([]);
+
+const createOpen = ref(false);
+const editOpen = ref(false);
+const deleteOpen = ref(false);
+const selectedItem = ref<Record<string, any> | null>(null);
+
+const driverFields: FormField[] = [
+    { name: 'email', label: 'Email', type: 'email', required: true },
+    { name: 'password', label: 'Mot de passe', type: 'password', required: true },
+    { name: 'firstname', label: 'Prénom', type: 'text' },
+    { name: 'lastname', label: 'Nom', type: 'text' },
+    { name: 'phone_number', label: 'Téléphone', type: 'text' },
+    { name: 'hub_id', label: 'Hub', type: 'select', asyncOptions: { endpoint: '/hubs', labelKey: 'name', valueKey: 'id' } },
+];
+
+const driverEditFields: FormField[] = [
+    { name: 'email', label: 'Email', type: 'email', required: true },
+    { name: 'firstname', label: 'Prénom', type: 'text' },
+    { name: 'lastname', label: 'Nom', type: 'text' },
+    { name: 'phone_number', label: 'Téléphone', type: 'text' },
+    { name: 'hub_id', label: 'Hub', type: 'select', asyncOptions: { endpoint: '/hubs', labelKey: 'name', valueKey: 'id' } },
+];
+
+function editItem(item: any) {
+    selectedItem.value = item;
+    editOpen.value = true;
+}
+
+function deleteItem(item: any) {
+    selectedItem.value = item;
+    deleteOpen.value = true;
+}
 
 async function fetchDrivers() {
     loading.value = true;
