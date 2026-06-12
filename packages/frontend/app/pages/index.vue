@@ -126,7 +126,8 @@ function parseJwt(token: string): Record<string, unknown> | null {
 function redirectByRole(token: string) {
     const payload = parseJwt(token);
     const role = payload?.role as string;
-    if (role === 'admin' || role === 'business_manager') return '/admin/dashboard';
+    if (role === 'admin') return '/admin/dashboard';
+    if (role === 'business_manager') return '/business/dashboard';
     if (role === 'dispatcher') return '/dispatcher/dashboard';
     if (role === 'driver') return '/livreur/dashboard';
     return '/admin/dashboard';
