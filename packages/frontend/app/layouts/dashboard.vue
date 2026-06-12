@@ -151,7 +151,7 @@ const visibleGroups = computed(() => {
     const base =
         {
             admin: '/admin',
-            business_manager: '/admin',
+            business_manager: '/business',
             dispatcher: '/dispatcher',
             driver: '/livreur',
         }[role] ?? '/admin';
@@ -257,9 +257,24 @@ const visibleGroups = computed(() => {
                         icon: ShoppingBag,
                     },
                     {
-                        label: 'Factures',
-                        href: `${base}/factures`,
+                        label: 'Facturation',
+                        href: `${base}/facturation`,
                         icon: FileText,
+                    },
+                ],
+            },
+            {
+                label: 'Suivi',
+                items: [
+                    {
+                        label: 'Livraisons',
+                        href: `${base}/livraisons`,
+                        icon: Truck,
+                    },
+                    {
+                        label: 'Paiements & relances',
+                        href: `${base}/paiements`,
+                        icon: BarChart3,
                     },
                 ],
             },
