@@ -1,10 +1,9 @@
-name: Deploy static site to GitHub Pages
+name: Deploy Nuxt Static Site
 
 on:
     push:
         branches:
             - static
-    workflow_dispatch:
 
 permissions:
     contents: read
@@ -12,68 +11,44 @@ permissions:
     id-token: write
 
 concurrency:
-    group: pages
+    group: 'pages'
     cancel-in-progress: true
 
 jobs:
-    build:
-        name: Build static site
+    deploy:
+        environment:
+            name: github-pages
+            url: ${{ steps:deployment.outputs.page_url }}
         runs-on: ubuntu-latest
-        defaults:
-            run:
-                working-directory: ./packages/frontend
         steps:
-            - uses: actions/checkout@v4
+            - name: Checkout repository
+              uses: actions/checkout@v4
 
-            - uses: pnpm/action-setup@v4
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
               with:
                   version: 9
 
-            - uses: actions/setup-node@v4
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
               with:
-                  node-version: 22
-                  cache: pnpm
-                  cache-dependency-path: ./packages/frontend/pnpm-lock.yaml
-
-            - name: Setup Pages
-              uses: actions/configure-pages@v5
-              with:
-                  # static_site_generator: nuxt
-                  # generator_config_file: ./packages/frontend/nuxt.config.ts
-                  token: ${{ secrets.ACTIONS_DEPLOY_PAGES_ENABLEMENT }}
-                  enablement: true
-
-            - name: Restore cache
-              uses: actions/cache@v4
-              with:
-                  path: |
-                      ./packages/frontend/node_modules
-                      ./packages/frontend/.nuxt
-                      ./packages/frontend/dist
-                  key: ${{ runner.os }}-nuxt-build-${{ hashFiles('dist') }}
-                  restore-keys: |
-                      ${{ runner.os }}-nuxt-build-
+                  node-version: 20
+                  cache: 'pnpm'
+                  cache-dependency-path: packages/frontend/pnpm-lock.yaml
 
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
+              working-directory: packages/frontend
 
-            - name: Generate static site
+            - name: Static generate (Nuxt)
               run: pnpm generate
+              working-directory: packages/frontend
 
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v3
               with:
-                  path: ./packages/frontend/dist
+                  path: packages/frontend/dist
 
-    deploy:
-        name: Deploy to GitHub Pages
-        needs: build
-        runs-on: ubuntu-latest
-        environment:
-            name: github-pages
-            url: ${{ steps.deployment.outputs.page_url }}
-        steps:
             - name: Deploy to GitHub Pages
               id: deployment
-              uses: actions/deploy-pages@v5
-
+              uses: actions/deploy-pages@v4
