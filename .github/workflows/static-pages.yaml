@@ -34,6 +34,22 @@ jobs:
                   node-version: 22
                   cache: pnpm
                   cache-dependency-path: ./packages/frontend/pnpm-lock.yaml
+            
+            - name: Setup Pages
+              uses: actions/configure-pages@v5
+              with: 
+                  static_site_generator: nuxt
+
+            - name: Restore cache
+              uses: actions/cache@v4
+              with:
+              path: |
+                  ./packages/frontend/node_modules
+                  ./packages/frontend/.nuxt
+                  ./packages/frontend/dist
+              key: ${{ runner.os }}-nuxt-build-${{ hashFiles('dist') }}
+              restore-keys: |
+                  ${{ runner.os }}-nuxt-build-
 
             - name: Install dependencies
               run: pnpm install --frozen-lockfile
@@ -56,4 +72,4 @@ jobs:
         steps:
             - name: Deploy to GitHub Pages
               id: deployment
-              uses: actions/deploy-pages@v4
+              uses: actions/deploy-pages@v5
