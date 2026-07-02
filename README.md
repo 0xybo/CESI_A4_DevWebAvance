@@ -1,13 +1,21 @@
 # Transvirex Logistics — Moving Intelligence
 
-[![Static Site](https://img.shields.io/badge/demo-transvirex.com-6366f1)](https://www.transvirex.com)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Static Site](https://img.shields.io/badge/demo-transvirex.com-6366f1)](https://www.transvirex.com) [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 **Transvirex Logistics** est un ERP de gestion logistique conçu dans le cadre d'un **projet de développement web avancé (CESI A4)**. L'application digitalise le transport régional en centralisant les opérations, automatisant la facturation et intégrant un assistant IA.
 
 > 🇫🇷 Projet étudiant à but pédagogique — L'application et ses données sont fictives.
 >
 > ⚠️ Le développement de cette application à été réalisé par un petit groupe d'étudiants sur 5 jours. Certaines fonctionnalités soient incomplètes et des bugs soient présents. Merci de votre compréhension.
+
+> Fork de https://github.com/cesi-A4-advanced-web/transvirex
+>
+> Contributeurs :
+>
+> - [Alec F. (thatsafail)](https://github.com/thatsafail)
+> - [Alban G (0xybo)](https://github.com/0xybo)
+> - [Achile Coskun (Zaidoudou)](https://github.com/Zaidoudou)
+> - Seif-Allah S.
 
 ---
 
