@@ -8,7 +8,7 @@
                 <p class="text-xl font-bold leading-none">Transvirex</p>
                 <p class="text-sm text-primary-light mt-0.5">Moving Intelligence</p>
             </div> -->
-            <NuxtImg src="/logo-color.svg" alt="Transvirex Logo" class="mb-8 w-full max-w-40" />
+            <img src="/logo-color.svg" alt="Transvirex Logo" class="mb-8 w-full max-w-40" />
             <div class="hidden md:block">
                 <h1 class="text-5xl font-extrabold leading-tight mb-4">La logistique,<br />repensée.</h1>
                 <p class="text-primary-light text-base leading-relaxed max-w-xs">

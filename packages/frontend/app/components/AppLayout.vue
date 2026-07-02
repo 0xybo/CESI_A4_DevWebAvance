@@ -21,7 +21,7 @@
                     <p class="text-xl font-bold text-white leading-none whitespace-nowrap">Transvirex</p>
                     <p class="text-xs text-primary-light mt-0.5 whitespace-nowrap">Moving Intelligence</p>
                 </div> -->
-                <NuxtImg
+                <img
                     src="/logo-color.svg"
                     alt="Transvirex Logo"
                     width="150"
@@ -596,3 +596,4 @@ async function handleLogout() {
     await navigateTo('/');
 }
 </script>
+
