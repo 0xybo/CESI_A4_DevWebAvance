@@ -39,7 +39,9 @@ jobs:
               uses: actions/configure-pages@v5
               with:
                   static_site_generator: nuxt
-
+                  generator_config_file: ./packages/frontend/nuxt.config.ts
+                  token: ${{ secrets.ACTIONS_DEPLOY_PAGES_ENABLEMENT }}
+                  enablement: true
             - name: Restore cache
               uses: actions/cache@v4
               with:
